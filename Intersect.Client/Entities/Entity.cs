@@ -92,6 +92,8 @@ namespace Intersect.Client.Entities
 
         public bool IsMoving;
 
+        public bool IsATarget = false;
+
         //Caching
         public MapInstance LatestMap;
 
