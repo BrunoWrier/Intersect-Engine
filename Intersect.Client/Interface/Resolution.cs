@@ -8,7 +8,7 @@
 
         public ushort Y;
 
-        public Resolution(long x = 800, long y = 600)
+        public Resolution(long x = 1280, long y = 720)
         {
             X = (ushort) (x & 0xFFFF);
             Y = (ushort) (y & 0xFFFF);
