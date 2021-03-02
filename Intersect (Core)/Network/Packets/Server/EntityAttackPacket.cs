@@ -5,7 +5,7 @@ using Intersect.Enums;
 namespace Intersect.Network.Packets.Server
 {
 
-    public class EntityAttackPacket : AbstractTimedPacket
+    public class EntityAttackPacket : CerasPacket
     {
 
         public EntityAttackPacket(Guid id, EntityTypes type, Guid mapId, int attackTimer)

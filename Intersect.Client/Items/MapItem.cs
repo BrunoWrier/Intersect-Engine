@@ -1,6 +1,4 @@
-﻿using System;
-using Newtonsoft.Json;
-
+﻿using Newtonsoft.Json;
 
 namespace Intersect.Client.Items
 {
@@ -11,10 +9,6 @@ namespace Intersect.Client.Items
         public int X;
 
         public int Y;
-
-        public Guid Owner;
-
-        public bool VisibleToAll;
 
         public MapItemInstance() : base()
         {

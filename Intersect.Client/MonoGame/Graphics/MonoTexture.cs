@@ -5,7 +5,6 @@ using Intersect.Client.Framework.Graphics;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game.Chat;
 using Intersect.Client.Localization;
-using Intersect.IO.Files;
 using Intersect.Logging;
 
 using Microsoft.Xna.Framework;
@@ -29,19 +28,16 @@ namespace Intersect.Client.MonoGame.Graphics
 
         private GameTexturePackFrame mPackFrame;
 
-        private readonly string mPath = "";
-
-        private readonly string mRealPath = "";
+        private string mPath = "";
 
         private Texture2D mTexture;
 
         private int mWidth = -1;
 
-        public MonoTexture(GraphicsDevice graphicsDevice, string filename, string realPath)
+        public MonoTexture(GraphicsDevice graphicsDevice, string filename)
         {
             mGraphicsDevice = graphicsDevice;
             mPath = filename;
-            mRealPath = realPath;
             mName = Path.GetFileName(filename);
         }
 
@@ -64,56 +60,33 @@ namespace Intersect.Client.MonoGame.Graphics
 
             if (mPackFrame != null)
             {
-                ((MonoTexture) mPackFrame.PackTexture)?.LoadTexture();
+                ((MonoTexture) mPackFrame.PackTexture).LoadTexture();
 
                 return;
             }
-
 
             mLoadError = true;
-            if (string.IsNullOrWhiteSpace(mRealPath))
+            if (!File.Exists(mPath))
             {
-                Log.Error("Invalid texture path (empty/null).");
-
                 return;
             }
 
-            var relativePath = FileSystemHelper.RelativePath(Directory.GetCurrentDirectory(), mPath);
-
-            if (!File.Exists(mRealPath))
-            {
-                Log.Error($"Texture does not exist: {relativePath}");
-
-                return;
-            }
-
-            using (var fileStream = File.Open(mRealPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var fileStream = new FileStream(mPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 try
                 {
                     mTexture = Texture2D.FromStream(mGraphicsDevice, fileStream);
-                    if (mTexture == null)
+                    if (mTexture != null)
                     {
-                        Log.Error($"Failed to load texture due to unknown error: {relativePath}");
-                        ChatboxMsg.AddMessage(
-                            new ChatboxMsg(
-                                Strings.Errors.LoadFile.ToString(Strings.Words.lcase_sprite) + " [" + mName + "]",
-                                new Color(0xBF, 0x0, 0x0)
-                            )
-                        );
-                        return;
+                        mWidth = mTexture.Width;
+                        mHeight = mTexture.Height;
+                        mLoadError = false;
                     }
-
-                    mWidth = mTexture.Width;
-                    mHeight = mTexture.Height;
-                    mLoadError = false;
                 }
-                catch (Exception exception)
+                catch (Exception ex)
                 {
-                    Log.Error(
-                        exception,
-                        $"Failed to load texture ({FileSystemHelper.FormatSize(fileStream.Length)}): {relativePath}"
-                    );
+                    //Failed to load texture.. lets log like we do with audio
+                    Log.Error($"Error loading '{mName}'.", ex);
                     ChatboxMsg.AddMessage(
                         new ChatboxMsg(
                             Strings.Errors.LoadFile.ToString(Strings.Words.lcase_sprite) + " [" + mName + "]",

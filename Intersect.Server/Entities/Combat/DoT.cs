@@ -31,7 +31,7 @@ namespace Intersect.Server.Entities.Combat
                 return;
             }
 
-            mInterval = Globals.Timing.Milliseconds + SpellBase.Combat.HotDotInterval;
+            mInterval = Globals.Timing.TimeMs + SpellBase.Combat.HotDotInterval;
             Count = SpellBase.Combat.Duration / SpellBase.Combat.HotDotInterval - 1;
             target.DoT.Add(this);
 
@@ -64,7 +64,7 @@ namespace Intersect.Server.Entities.Combat
                 return;
             }
 
-            if (mInterval > Globals.Timing.Milliseconds)
+            if (mInterval > Globals.Timing.TimeMs)
             {
                 return;
             }
@@ -84,7 +84,7 @@ namespace Intersect.Server.Entities.Combat
                 aliveAnimations
             );
 
-            mInterval = Globals.Timing.Milliseconds + SpellBase.Combat.HotDotInterval;
+            mInterval = Globals.Timing.TimeMs + SpellBase.Combat.HotDotInterval;
             Count--;
         }
 

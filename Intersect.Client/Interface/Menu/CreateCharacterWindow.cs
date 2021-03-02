@@ -209,12 +209,6 @@ namespace Intersect.Client.Interface.Menu
 
                 return;
             }
-
-            // Re-Enable our buttons if we're not waiting for the server anymore with it disabled.
-            if (!Globals.WaitingOnServer && mCreateButton.IsDisabled)
-            {
-                mCreateButton.Enable();
-            }
         }
 
         //Methods
@@ -283,12 +277,12 @@ namespace Intersect.Client.Interface.Menu
                         else
                         {
                             mCharacterPortrait.SetTextureRect(
-                                0, 0, mCharacterPortrait.Texture.GetWidth() / Options.Instance.Sprites.NormalFrames,
-                                mCharacterPortrait.Texture.GetHeight() / Options.Instance.Sprites.Directions
+                                0, 0, mCharacterPortrait.Texture.GetWidth() / 4,
+                                mCharacterPortrait.Texture.GetHeight() / 4
                             );
 
                             mCharacterPortrait.SetSize(
-                                mCharacterPortrait.Texture.GetWidth() / Options.Instance.Sprites.NormalFrames, mCharacterPortrait.Texture.GetHeight() / Options.Instance.Sprites.Directions
+                                mCharacterPortrait.Texture.GetWidth() / 4, mCharacterPortrait.Texture.GetHeight() / 4
                             );
 
                             mCharacterPortrait.SetPosition(
@@ -488,7 +482,6 @@ namespace Intersect.Client.Interface.Menu
                 }
 
                 Globals.WaitingOnServer = true;
-                mCreateButton.Disable();
                 ChatboxMsg.ClearMessages();
             }
             else
@@ -534,11 +527,6 @@ namespace Intersect.Client.Interface.Menu
 
         void CreateButton_Clicked(Base sender, ClickedEventArgs arguments)
         {
-            if (Globals.WaitingOnServer)
-            {
-                return;
-            }
-
             if (mMaleChk.IsChecked == true)
             {
                 TryCreateCharacter(0);
