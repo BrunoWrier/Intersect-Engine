@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 
 using Intersect.Localization;
-
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -456,6 +456,9 @@ namespace Intersect.Client.Localization
             public static LocalizedString title = @"Chat";
 
             public static LocalizedString toofast = @"You are chatting too fast!";
+
+            [NotNull, JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+            public static LocalizedString UnableToCopy = @"It appears you are not able to copy/paste on this platform. Please make sure you have either the 'xclip' or 'wl-clipboard' packages installed if you are running Linux.";
 
         }
 
@@ -1510,6 +1513,27 @@ namespace Intersect.Client.Localization
             public static LocalizedString dec = ".";
 
             public static LocalizedString comma = ",";
+
+        }
+
+        public struct Update
+        {
+
+            public static LocalizedString Checking = @"Checking for updates, please wait!";
+
+            public static LocalizedString Updating = @"Downloading updates, please wait!";
+
+            public static LocalizedString Restart = @"Update complete! Relaunch {00} to play!";
+
+            public static LocalizedString Done = @"Update complete! Launching game!";
+
+            public static LocalizedString Error = @"Update Error! Check logs for more info!";
+
+            public static LocalizedString Files = @"{00} Files Remaining";
+
+            public static LocalizedString Size = @"{00} Left";
+
+            public static LocalizedString Percent = @"{00}%";
 
         }
 
