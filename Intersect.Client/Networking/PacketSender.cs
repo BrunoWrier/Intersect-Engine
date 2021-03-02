@@ -5,9 +5,7 @@ using Intersect.Client.Entities.Events;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game;
 using Intersect.Client.Maps;
-using Intersect.Logging;
 using Intersect.Network.Packets.Client;
-using Intersect.Utilities;
 
 namespace Intersect.Client.Networking
 {
@@ -17,7 +15,7 @@ namespace Intersect.Client.Networking
 
         public static void SendPing()
         {
-            Network.SendPacket(new PingPacket { Responding = true });
+            Network.SendPacket(new PingPacket());
         }
 
         public static void SendLogin(string username, string password)

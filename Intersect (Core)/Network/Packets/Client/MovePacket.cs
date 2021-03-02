@@ -3,7 +3,7 @@
 namespace Intersect.Network.Packets.Client
 {
 
-    public class MovePacket : AbstractTimedPacket
+    public class MovePacket : CerasPacket
     {
 
         public MovePacket(Guid mapId, byte x, byte y, byte dir)

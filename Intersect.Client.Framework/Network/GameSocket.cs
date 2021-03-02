@@ -21,7 +21,7 @@ namespace Intersect.Client.Framework.Network
 
         public abstract bool IsConnected();
 
-        public abstract int Ping { get; }
+        public abstract int Ping();
 
         public event DataReceivedHandler DataReceived;
 

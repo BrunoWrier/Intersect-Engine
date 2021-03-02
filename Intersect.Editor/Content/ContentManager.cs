@@ -8,11 +8,8 @@ using System.Windows.Forms;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.GameObjects;
-using Intersect.IO.Files;
 using Intersect.Logging;
 using Intersect.Utilities;
-
-using JetBrains.Annotations;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -54,7 +51,7 @@ namespace Intersect.Editor.Content
         }
 
         //Game Content
-        [NotNull] public static List<Texture> AllTextures { get; } = new List<Texture>();
+        public static List<Texture> AllTextures = new List<Texture>();
 
         public static List<Texture> FogTextures = new List<Texture>();
 
@@ -329,26 +326,18 @@ namespace Intersect.Editor.Content
         public static void LoadShaders()
         {
             sShaderDict.Clear();
-
-            const string shaderPrefix = "Intersect.Editor.Resources.Shaders.";
-            var availableShaders = typeof(GameContentManager).Assembly
-                .GetManifestResourceNames()
-                .Where(resourceName =>
-                    resourceName.StartsWith(shaderPrefix)
-                    && resourceName.EndsWith(".xnb")
-                ).ToArray();
-
-            for (var i = 0; i < availableShaders.Length; i++)
+            if (!Directory.Exists("resources/" + "shaders"))
             {
-                var resourceFullName = availableShaders[i];
-                var shaderName = resourceFullName.Substring(shaderPrefix.Length);
+                Directory.CreateDirectory("resources/" + "shaders");
+            }
 
-                using (var resourceStream = typeof(GameContentManager).Assembly.GetManifestResourceStream(resourceFullName))
-                {
-                    var extractedPath = FileSystemHelper.WriteToTemporaryFolder(resourceFullName, resourceStream);
-                    var shader = sContentManger.Load<Effect>(Path.ChangeExtension(extractedPath, null));
-                    sShaderDict.Add(shaderName, shader);
-                }
+            var items = Directory.GetFiles("resources/" + "shaders", "*_editor.xnb");
+            for (var i = 0; i < items.Length; i++)
+            {
+                var filename = items[i].Replace("resources/" + "shaders" + "\\", "").ToLower();
+                sShaderDict.Add(
+                    filename, sContentManger.Load<Effect>(RemoveExtension("resources/" + "shaders" + "/" + filename))
+                );
             }
         }
 

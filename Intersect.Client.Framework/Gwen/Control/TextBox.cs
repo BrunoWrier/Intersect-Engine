@@ -58,15 +58,10 @@ namespace Intersect.Client.Framework.Gwen.Control
 
             IsTabable = true;
 
-            // Some platforms it works with spaces, others without.. so why not both?
             AddAccelerator("Ctrl + C", OnCopy);
             AddAccelerator("Ctrl + X", OnCut);
             AddAccelerator("Ctrl + V", OnPaste);
             AddAccelerator("Ctrl + A", OnSelectAll);
-            AddAccelerator("Ctrl+C", OnCopy);
-            AddAccelerator("Ctrl+X", OnCut);
-            AddAccelerator("Ctrl+V", OnPaste);
-            AddAccelerator("Ctrl+A", OnSelectAll);
         }
 
         protected override bool AccelOnlyFocus => true;

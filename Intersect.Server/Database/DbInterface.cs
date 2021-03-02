@@ -388,7 +388,7 @@ namespace Intersect.Server.Database
             lock (mPlayerDbLock)
             {
                 return sPlayerDb.Users.Any(
-                    p => string.Equals(p.Email, email, StringComparison.CurrentCultureIgnoreCase)
+                    p => string.Equals(p.Email.Trim(), email.Trim(), StringComparison.CurrentCultureIgnoreCase)
                 );
             }
         }
@@ -398,7 +398,7 @@ namespace Intersect.Server.Database
             lock (mPlayerDbLock)
             {
                 return sPlayerDb.Players.Any(
-                    p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase)
+                    p => string.Equals(p.Name.Trim(), name.Trim(), StringComparison.CurrentCultureIgnoreCase)
                 );
             }
         }
@@ -408,7 +408,7 @@ namespace Intersect.Server.Database
             lock (mPlayerDbLock)
             {
                 return sPlayerDb.Players.Where(
-                        p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase)
+                        p => string.Equals(p.Name.Trim(), name.Trim(), StringComparison.CurrentCultureIgnoreCase)
                     )
                     ?.First()
                     ?.Id;
@@ -551,23 +551,22 @@ namespace Intersect.Server.Database
             SavePlayerDatabaseAsync();
         }
 
-        public static Bag GetBag(Guid bagId)
+        //Bags
+        public static Bag GetBag(Item item)
         {
-            if (bagId == Guid.Empty)
+            return GetBag(item.BagId);
+        }
+
+        public static Bag GetBag(Guid? id)
+        {
+            if (id == null)
             {
                 return null;
             }
 
             lock (mPlayerDbLock)
             {
-                var bag = Bag.GetBag(sPlayerDb, bagId);
-                if (bag == null)
-                {
-                    return default;
-                }
-
-                bag.ValidateSlots();
-                return bag;
+                return Bag.GetBag(sPlayerDb, (Guid) id);
             }
         }
 

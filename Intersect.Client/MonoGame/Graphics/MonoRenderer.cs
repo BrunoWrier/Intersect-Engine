@@ -97,6 +97,7 @@ namespace Intersect.Client.MonoGame.Graphics
             mGame = monoGame;
             mGraphics = graphics;
             mContentManager = contentManager;
+            mGraphics.PreferHalfPixelOffset = true;
 
             mNormalState = new BlendState()
             {
@@ -851,7 +852,7 @@ namespace Intersect.Client.MonoGame.Graphics
             return new MonoShader(shaderName, mContentManager);
         }
 
-        public override GameTexture LoadTexture(string filename, string realFilename)
+        public override GameTexture LoadTexture(string filename)
         {
             var packFrame = GameTexturePacks.GetFrame(filename);
             if (packFrame != null)
@@ -862,7 +863,7 @@ namespace Intersect.Client.MonoGame.Graphics
                 return tx;
             }
 
-            var tex = new MonoTexture(mGraphicsDevice, filename, realFilename);
+            var tex = new MonoTexture(mGraphicsDevice, filename);
             mAllTextures.Add(tex);
 
             return tex;

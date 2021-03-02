@@ -3,7 +3,7 @@
 namespace Intersect.Network.Packets.Client
 {
 
-    public class AttackPacket : AbstractTimedPacket
+    public class AttackPacket : CerasPacket
     {
 
         public AttackPacket(Guid target, bool targetOnFocus)

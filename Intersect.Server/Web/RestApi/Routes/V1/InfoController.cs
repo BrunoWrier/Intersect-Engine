@@ -46,7 +46,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
         {
             return new
             {
-                uptime = Globals.Timing.Milliseconds,
+                uptime = Globals.Timing.TimeMs,
                 cps = Globals.Cps,
                 connectedClients = Globals.Clients?.Count,
                 onlineCount = Globals.OnlineList?.Count

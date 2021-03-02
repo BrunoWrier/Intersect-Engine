@@ -7,7 +7,6 @@ using Intersect.Server.Core;
 using Intersect.Server.Entities;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
-using Intersect.Utilities;
 
 using JetBrains.Annotations;
 
@@ -27,7 +26,8 @@ namespace Intersect.Server.General
 
         public static bool CpsLock = true;
 
-        [Obsolete, NotNull] public static Timing Timing => Timing.Global;
+        [NotNull]
+        public static ServerTiming Timing { get; } = new ServerTiming();
 
         public static List<Player> OnlineList => Clients.FindAll(client => client?.Entity != null)
             .Select(client => client.Entity)

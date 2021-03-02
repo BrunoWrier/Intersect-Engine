@@ -17,7 +17,7 @@ namespace Intersect.Server.Entities.Combat
         {
             Spell = spell;
             BuffType = buff;
-            Duration = Globals.Timing.Milliseconds + duration;
+            Duration = Globals.Timing.TimeMs + duration;
         }
 
     }

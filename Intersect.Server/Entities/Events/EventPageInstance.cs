@@ -312,7 +312,7 @@ namespace Intersect.Server.Entities.Events
 
         public void Update(bool isActive, long timeMs)
         {
-            if (MoveTimer >= Globals.Timing.Milliseconds || GlobalClone != null || isActive && MyPage.InteractionFreeze)
+            if (MoveTimer >= Globals.Timing.TimeMs || GlobalClone != null || isActive && MyPage.InteractionFreeze)
             {
                 return;
             }
@@ -334,7 +334,7 @@ namespace Intersect.Server.Entities.Events
                     if (CanMove(dir) == -1)
                     {
                         Move(dir, Player);
-                        MoveTimer = Globals.Timing.Milliseconds + (long) GetMovementTime();
+                        MoveTimer = Globals.Timing.TimeMs + (long) GetMovementTime();
                     }
                 }
             }
@@ -694,9 +694,9 @@ namespace Intersect.Server.Entities.Events
                         SendToPlayer();
                     }
 
-                    if (MoveTimer < Globals.Timing.Milliseconds)
+                    if (MoveTimer < Globals.Timing.TimeMs)
                     {
-                        MoveTimer = Globals.Timing.Milliseconds + (long) GetMovementTime();
+                        MoveTimer = Globals.Timing.TimeMs + (long) GetMovementTime();
                     }
                 }
             }

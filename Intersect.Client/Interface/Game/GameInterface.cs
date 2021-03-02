@@ -161,7 +161,10 @@ namespace Intersect.Client.Interface.Game
 
         public void OpenShop()
         {
-            mShopWindow?.Close();
+            if (mShopWindow != null)
+            {
+                mShopWindow.Close();
+            }
 
             mShopWindow = new ShopWindow(GameCanvas);
             mShouldOpenShop = false;
@@ -180,7 +183,10 @@ namespace Intersect.Client.Interface.Game
 
         public void OpenBank()
         {
-            mBankWindow?.Close();
+            if (mBankWindow != null)
+            {
+                mBankWindow.Close();
+            }
 
             mBankWindow = new BankWindow(GameCanvas);
             mShouldOpenBank = false;
@@ -200,7 +206,10 @@ namespace Intersect.Client.Interface.Game
 
         public void OpenBag()
         {
-            mBagWindow?.Close();
+            if (mBagWindow != null)
+            {
+                mBagWindow.Close();
+            }
 
             mBagWindow = new BagWindow(GameCanvas);
             mShouldOpenBag = false;
@@ -351,7 +360,6 @@ namespace Intersect.Client.Interface.Game
             if (mShouldOpenShop)
             {
                 OpenShop();
-                GameMenu.OpenInventory();
             }
 
             if (mShopWindow != null && (!mShopWindow.IsVisible() || mShouldCloseShop))
@@ -366,7 +374,6 @@ namespace Intersect.Client.Interface.Game
             if (mShouldOpenBank)
             {
                 OpenBank();
-                GameMenu.OpenInventory();
             }
 
             if (mBankWindow != null)
@@ -409,7 +416,6 @@ namespace Intersect.Client.Interface.Game
             if (mShouldOpenCraftingTable)
             {
                 OpenCraftingTable();
-                GameMenu.OpenInventory();
             }
 
             if (mCraftingWindow != null)
@@ -431,7 +437,6 @@ namespace Intersect.Client.Interface.Game
             if (mShouldOpenTrading)
             {
                 OpenTrading();
-                GameMenu.OpenInventory();
             }
 
             if (mTradingWindow != null)
@@ -458,7 +463,6 @@ namespace Intersect.Client.Interface.Game
             if (mShouldUpdateFriendsList)
             {
                 GameMenu.UpdateFriendsList();
-                mShouldUpdateFriendsList = false;
             }
 
             mShouldCloseTrading = false;

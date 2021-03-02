@@ -188,20 +188,18 @@ namespace Intersect.Server.Entities.Events
                 newCommandList = stackInfo.Page.CommandLists[command.BranchIds[0]];
             }
 
-            if (!success && command.Condition.ElseEnabled && stackInfo.Page.CommandLists.ContainsKey(command.BranchIds[1]))
+            if (!success && stackInfo.Page.CommandLists.ContainsKey(command.BranchIds[1]))
             {
                 newCommandList = stackInfo.Page.CommandLists[command.BranchIds[1]];
             }
 
-            if (newCommandList != null)
+            var tmpStack = new CommandInstance(stackInfo.Page)
             {
-                var tmpStack = new CommandInstance(stackInfo.Page) {
-                    CommandList = newCommandList,
-                    CommandIndex = 0,
-                };
+                CommandList = newCommandList,
+                CommandIndex = 0,
+            };
 
-                callStack.Push(tmpStack);
-            }
+            callStack.Push(tmpStack);
         }
 
         //Exit Event Process Command
@@ -295,7 +293,7 @@ namespace Intersect.Server.Entities.Events
             else if (command.Amount < 0)
             {
                 player.SubVital(Vitals.Health, -command.Amount);
-                player.CombatTimer = Globals.Timing.Milliseconds + Options.CombatTime;
+                player.CombatTimer = Globals.Timing.TimeMs + Options.CombatTime;
                 if (player.GetVital(Vitals.Health) <= 0)
                 {
                     player.Die(Options.ItemDropChance);
@@ -323,7 +321,7 @@ namespace Intersect.Server.Entities.Events
             else if (command.Amount < 0)
             {
                 player.SubVital(Vitals.Mana, -command.Amount);
-                player.CombatTimer = Globals.Timing.Milliseconds + Options.CombatTime;
+                player.CombatTimer = Globals.Timing.TimeMs + Options.CombatTime;
             }
             else
             {
@@ -421,14 +419,13 @@ namespace Intersect.Server.Entities.Events
         )
         {
             var success = false;
-
-            if (command.Add)
+            if (command.Add) //Try to give item
             {
-                success = player.TryGiveItem(command.ItemId, command.Quantity, command.ItemHandling);
+                success = player.TryGiveItem(new Item(command.ItemId, command.Quantity));
             }
             else
             {
-                success = player.TryTakeItem(command.ItemId, command.Quantity, command.ItemHandling);
+                success = player.TakeItemsById(command.ItemId, command.Quantity);
             }
 
             List<EventCommand> newCommandList = null;
@@ -1032,7 +1029,7 @@ namespace Intersect.Server.Entities.Events
             Stack<CommandInstance> callStack
         )
         {
-            instance.WaitTimer = Globals.Timing.Milliseconds + command.Time;
+            instance.WaitTimer = Globals.Timing.TimeMs + command.Time;
             callStack.Peek().WaitingForResponse = CommandInstance.EventResponse.Timer;
         }
 

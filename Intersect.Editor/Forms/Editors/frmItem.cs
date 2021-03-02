@@ -240,10 +240,9 @@ namespace Intersect.Editor.Forms.Editors
             grpSpell.Text = Strings.ItemEditor.spellpanel;
             lblSpell.Text = Strings.ItemEditor.spell;
             chkQuickCast.Text = Strings.ItemEditor.quickcast;
-            chkSingleUseSpell.Text = Strings.ItemEditor.destroyspell;
+            chkDestroy.Text = Strings.ItemEditor.destroyspell;
 
             grpEvent.Text = Strings.ItemEditor.eventpanel;
-            chkSingleUseEvent.Text = Strings.ItemEditor.SingleUseEvent;
 
             grpConsumable.Text = Strings.ItemEditor.consumeablepanel;
             lblVital.Text = Strings.ItemEditor.vital;
@@ -416,13 +415,12 @@ namespace Intersect.Editor.Forms.Editors
             {
                 cmbTeachSpell.SelectedIndex = SpellBase.ListIndex(mEditorItem.SpellId) + 1;
                 chkQuickCast.Checked = mEditorItem.QuickCast;
-                chkSingleUseSpell.Checked = mEditorItem.SingleUse;
+                chkDestroy.Checked = mEditorItem.DestroySpell;
                 grpSpell.Visible = true;
             }
             else if (cmbType.SelectedIndex == (int) ItemTypes.Event)
             {
                 cmbEvent.SelectedIndex = EventBase.ListIndex(mEditorItem.EventId) + 1;
-                chkSingleUseEvent.Checked = mEditorItem.SingleUse;
                 grpEvent.Visible = true;
             }
             else if (cmbType.SelectedIndex == (int) ItemTypes.Equipment)
@@ -880,17 +878,9 @@ namespace Intersect.Editor.Forms.Editors
             mEditorItem.QuickCast = chkQuickCast.Checked;
         }
 
-        private void chkSingleUse_CheckedChanged(object sender, EventArgs e)
+        private void chkDestroy_CheckedChanged(object sender, EventArgs e)
         {
-            switch ((ItemTypes)cmbType.SelectedIndex)
-            {
-                case ItemTypes.Spell:
-                    mEditorItem.SingleUse = chkSingleUseSpell.Checked;
-                    break;
-                case ItemTypes.Event:
-                    mEditorItem.SingleUse = chkSingleUseEvent.Checked;
-                    break;
-            }
+            mEditorItem.DestroySpell = chkDestroy.Checked;
         }
 
         private void cmbRarity_SelectedIndexChanged(object sender, EventArgs e)
