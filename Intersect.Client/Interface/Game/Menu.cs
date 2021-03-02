@@ -8,8 +8,7 @@ using Intersect.Client.Interface.Game.Inventory;
 using Intersect.Client.Interface.Game.Spells;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
-
-using JetBrains.Annotations;
+using Intersect.GameObjects;
 
 namespace Intersect.Client.Interface.Game
 {
@@ -17,48 +16,50 @@ namespace Intersect.Client.Interface.Game
     public class Menu
     {
 
-        [NotNull] private readonly ImagePanel mCharacterBackground;
+        private readonly ImagePanel mCharacterBackground;
 
-        [NotNull] private readonly Button mCharacterButton;
+        private readonly Button mCharacterButton;
 
-        [NotNull] private readonly CharacterWindow mCharacterWindow;
+        private readonly CharacterWindow mCharacterWindow;
 
-        [NotNull] private readonly ImagePanel mFriendsBackground;
+        private readonly ImagePanel mFriendsBackground;
 
-        [NotNull] private readonly Button mFriendsButton;
+        private readonly Button mFriendsButton;
 
-        [NotNull] private readonly FriendsWindow mFriendsWindow;
+        private readonly FriendsWindow mFriendsWindow;
 
-        [NotNull] private readonly ImagePanel mInventoryBackground;
+        private readonly ImagePanel mInventoryBackground;
 
-        [NotNull] private readonly Button mInventoryButton;
+        private readonly Button mInventoryButton;
 
-        [NotNull] private readonly InventoryWindow mInventoryWindow;
+        private readonly InventoryWindow mInventoryWindow;
 
-        [NotNull] private readonly ImagePanel mMenuBackground;
+        private readonly ImagePanel mMenuBackground;
 
-        [NotNull] private readonly Button mMenuButton;
+        private readonly Button mMenuButton;
 
         //Menu Container
         private readonly ImagePanel mMenuContainer;
 
-        [NotNull] private readonly ImagePanel mPartyBackground;
+        private readonly ImagePanel mPartyBackground;
 
-        [NotNull] private readonly Button mPartyButton;
+        private readonly Button mPartyButton;
 
-        [NotNull] private readonly PartyWindow mPartyWindow;
+        private readonly PartyWindow mPartyWindow;
 
-        [NotNull] private readonly ImagePanel mQuestsBackground;
+        private readonly ImagePanel mQuestsBackground;
 
-        [NotNull] private readonly Button mQuestsButton;
+        private readonly Button mQuestsButton;
 
-        [NotNull] private readonly QuestsWindow mQuestsWindow;
+        private readonly QuestsWindow mQuestsWindow;
 
-        [NotNull] private readonly ImagePanel mSpellsBackground;
+        private readonly ImagePanel mSpellsBackground;
 
-        [NotNull] private readonly Button mSpellsButton;
+        private readonly Button mSpellsButton;
 
-        [NotNull] private readonly SpellsWindow mSpellsWindow;
+        private readonly SpellsWindow mSpellsWindow;
+
+        private readonly MapItemWindow mMapItemWindow;
 
         private int mBackgroundHeight = 42;
 
@@ -125,6 +126,7 @@ namespace Intersect.Client.Interface.Game
             mSpellsWindow = new SpellsWindow(gameCanvas);
             mCharacterWindow = new CharacterWindow(gameCanvas);
             mQuestsWindow = new QuestsWindow(gameCanvas);
+            mMapItemWindow = new MapItemWindow(gameCanvas);
         }
 
         //Methods
@@ -136,6 +138,7 @@ namespace Intersect.Client.Interface.Game
             mPartyWindow.Update();
             mFriendsWindow.Update();
             mQuestsWindow.Update(updateQuestLog);
+            mMapItemWindow.Update();
         }
 
         public void UpdateFriendsList()
@@ -206,6 +209,11 @@ namespace Intersect.Client.Interface.Game
             mInventoryWindow.Show();
         }
 
+        public InventoryWindow GetInventoryWindow()
+        {
+            return mInventoryWindow;
+        }
+
         public void TogglePartyWindow()
         {
             if (mPartyWindow.IsVisible())
@@ -245,6 +253,58 @@ namespace Intersect.Client.Interface.Game
             }
         }
 
+        public void CloseAllWindows()
+        {
+            mCharacterWindow.Hide();
+
+            mFriendsWindow.Hide();
+
+            mInventoryWindow.Hide();
+
+            mQuestsWindow.Hide();
+
+            mSpellsWindow.Hide();
+
+            mPartyWindow.Hide();
+        }
+
+        public bool HasWindowsOpen()
+        {
+            var windowsOpen = false;
+
+            if (mCharacterWindow.IsVisible())
+            {
+                windowsOpen = true;
+            }
+
+            if (mFriendsWindow.IsVisible())
+            {
+                windowsOpen = true;
+            }
+
+            if (mInventoryWindow.IsVisible())
+            {
+                windowsOpen = true;
+            }
+
+            if (mQuestsWindow.IsVisible())
+            {
+                windowsOpen = true;
+            }
+
+            if (mSpellsWindow.IsVisible())
+            {
+                windowsOpen = true;
+            }
+
+            if (mPartyWindow.IsVisible())
+            {
+                windowsOpen = true;
+            }
+
+            return windowsOpen;
+        }
+
         //Input Handlers
         private static void MenuButtonClicked(Base sender, ClickedEventArgs arguments)
         {
@@ -280,7 +340,6 @@ namespace Intersect.Client.Interface.Game
         {
             ToggleCharacterWindow();
         }
-
     }
 
 }

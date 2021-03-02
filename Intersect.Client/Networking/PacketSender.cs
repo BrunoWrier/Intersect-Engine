@@ -5,9 +5,7 @@ using Intersect.Client.Entities.Events;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game;
 using Intersect.Client.Maps;
-using Intersect.Logging;
 using Intersect.Network.Packets.Client;
-using Intersect.Utilities;
 
 namespace Intersect.Client.Networking
 {
@@ -113,9 +111,9 @@ namespace Intersect.Client.Networking
             Network.SendPacket(new CreateCharacterPacket(name, classId, sprite));
         }
 
-        public static void SendPickupItem(int index)
+        public static void SendPickupItem(Guid mapId, int tileIndex, Guid uniqueId)
         {
-            Network.SendPacket(new PickupItemPacket(index));
+            Network.SendPacket(new PickupItemPacket(mapId, tileIndex, uniqueId));
         }
 
         public static void SendSwapInvItems(int item1, int item2)
@@ -295,14 +293,14 @@ namespace Intersect.Client.Networking
             Network.SendPacket(new TradeRequestResponsePacket((Guid) ((InputBox) sender).UserData, false));
         }
 
-        public static void SendStoreBagItem(int slot, int amount)
+        public static void SendStoreBagItem(int invSlot, int amount, int bagSlot)
         {
-            Network.SendPacket(new StoreBagItemPacket(slot, amount));
+            Network.SendPacket(new StoreBagItemPacket(invSlot, amount, bagSlot));
         }
 
-        public static void SendRetrieveBagItem(int slot, int amount)
+        public static void SendRetrieveBagItem(int bagSlot, int amount, int invSlot)
         {
-            Network.SendPacket(new RetrieveBagItemPacket(slot, amount));
+            Network.SendPacket(new RetrieveBagItemPacket(bagSlot, amount, invSlot));
         }
 
         public static void SendCloseBag()

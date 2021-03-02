@@ -9,6 +9,7 @@ using Intersect.Enums;
 using Intersect.GameObjects;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData;
+using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
 using Intersect.Server.Extensions;
 using Intersect.Server.General;
@@ -18,8 +19,6 @@ using Intersect.Server.Web.RestApi.Attributes;
 using Intersect.Server.Web.RestApi.Extensions;
 using Intersect.Server.Web.RestApi.Payloads;
 using Intersect.Server.Web.RestApi.Types;
-
-using JetBrains.Annotations;
 
 namespace Intersect.Server.Web.RestApi.Routes.V1
 {
@@ -383,7 +382,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, @"Invalid bag id.");
             }
 
-            var bag = DbInterface.GetBag(bagId);
+            var bag = Bag.GetBag(bagId);
 
             if (bag == null)
             {
@@ -629,8 +628,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
             [FromBody] AdminActionParameters actionParameters
         )
         {
-            AdminActions adminAction;
-            if (!Enum.TryParse<AdminActions>(act, true, out adminAction))
+            if (!Enum.TryParse<AdminActions>(act, true, out var adminAction))
             {
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, @"Invalid action.");
             }
@@ -657,8 +655,8 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
         }
 
         private object DoAdminActionOnPlayer(
-            [NotNull] Func<Tuple<Client, Player>> fetch,
-            [NotNull] Func<HttpResponseMessage> onError,
+            Func<Tuple<Client, Player>> fetch,
+            Func<HttpResponseMessage> onError,
             AdminActions adminAction,
             AdminActionParameters actionParameters
         )
@@ -797,7 +795,11 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 case AdminActions.Kill:
                     if (client != null && client.Entity != null)
                     {
-                        client.Entity.Die();
+                        lock (client.Entity.EntityLock)
+                        {
+                            client.Entity.Die();
+                        }
+                        
                         PacketSender.SendGlobalMsg(Strings.Player.serverkilled.ToString(player.Name));
 
                         return Request.CreateMessageResponse(

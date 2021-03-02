@@ -189,15 +189,12 @@ namespace Intersect.Client.Core
                 GridSwitched = false;
             }
 
-            lock (AnimationLock)
+            var animations = LiveAnimations.ToArray();
+            foreach (var animInstance in animations)
             {
-                var animations = LiveAnimations.ToArray();
-                foreach (var animInstance in animations)
+                if (animInstance.ParentGone())
                 {
-                    if (animInstance.ParentGone())
-                    {
-                        animInstance.Dispose();
-                    }
+                    animInstance.Dispose();
                 }
             }
 
@@ -237,12 +234,9 @@ namespace Intersect.Client.Core
                 }
             }
 
-            lock (AnimationLock)
+            foreach (var animInstance in animations)
             {
-                foreach (var animInstance in LiveAnimations)
-                {
-                    animInstance.Draw(false);
-                }
+                animInstance.Draw(false);
             }
 
             for (var y = 0; y < Options.MapHeight * 5; y++)
@@ -277,13 +271,10 @@ namespace Intersect.Client.Core
                 }
             }
 
-            lock (AnimationLock)
+            foreach (var animInstance in animations)
             {
-                foreach (var animInstance in LiveAnimations)
-                {
-                    animInstance.Draw(false, true);
-                    animInstance.Draw(true, true);
-                }
+                animInstance.Draw(false, true);
+                animInstance.Draw(true, true);
             }
 
             for (var x = gridX - 1; x <= gridX + 1; x++)
@@ -328,13 +319,11 @@ namespace Intersect.Client.Core
                 }
             }
 
-            lock (AnimationLock)
+            foreach (var animInstance in animations)
             {
-                foreach (var animInstance in LiveAnimations)
-                {
-                    animInstance.Draw(true);
-                }
+                animInstance.Draw(true);
             }
+            
 
             for (var x = gridX - 1; x <= gridX + 1; x++)
             {
@@ -352,6 +341,7 @@ namespace Intersect.Client.Core
                             map.DrawWeather();
                             map.DrawFog();
                             map.DrawOverlayGraphic();
+                            map.DrawItemNames();
                         }
                     }
                 }
@@ -374,6 +364,7 @@ namespace Intersect.Client.Core
                         entity.DrawName(null);
                         if (entity.GetType() != typeof(Event))
                         {
+                            entity.DrawTag();
                             entity.DrawHpBar();
                             entity.DrawCastingBar();
                         }
@@ -392,6 +383,7 @@ namespace Intersect.Client.Core
                         entity.DrawName(null);
                         if (entity.GetType() != typeof(Event))
                         {
+                            entity.DrawTag();
                             entity.DrawHpBar();
                             entity.DrawCastingBar();
                         }
@@ -420,7 +412,7 @@ namespace Intersect.Client.Core
                 }
             }
 
-            foreach (var animInstance in LiveAnimations.ToArray())
+            foreach (var animInstance in animations)
             {
                 animInstance.EndDraw();
             }
@@ -488,6 +480,15 @@ namespace Intersect.Client.Core
                 new Color((int) Fade.GetFade(), 0, 0, 0), null, GameBlendModes.None
             );
 
+            // Draw our mousecursor at the very end, but not when taking screenshots.
+            if (!takingScreenshot && !string.IsNullOrWhiteSpace(ClientConfiguration.Instance.MouseCursor))
+            {
+                var renderLoc = ConvertToWorldPoint(Globals.InputManager.GetMousePosition());
+                DrawGameTexture(
+                    Globals.ContentManager.GetTexture(GameContentManager.TextureType.Misc, ClientConfiguration.Instance.MouseCursor), renderLoc.X, renderLoc.Y
+               );
+            }
+            
             Renderer.End();
 
             if (takingScreenshot)
@@ -1118,6 +1119,15 @@ namespace Intersect.Client.Core
         }
 
         //Helper Functions
+        /// <summary>
+        /// Convert a position on the screen to a position on the actual map for rendering.
+        /// </summary>
+        /// <param name="windowPoint">The point to convert.</param>
+        /// <returns>The converted point.</returns>
+        public static Pointf ConvertToWorldPoint(Pointf windowPoint)
+        {
+            return new Pointf((int)Math.Floor(windowPoint.X + CurrentView.Left), (int)Math.Floor(windowPoint.Y + CurrentView.Top));
+        }
 
         //Rendering Functions
 
