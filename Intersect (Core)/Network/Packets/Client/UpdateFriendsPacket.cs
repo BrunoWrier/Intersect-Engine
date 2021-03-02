@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Client
+﻿namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class UpdateFriendsPacket : IntersectPacket
+
+    public class UpdateFriendsPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public UpdateFriendsPacket()
-        {
-        }
 
         public UpdateFriendsPacket(string name, bool adding)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Client
             Adding = adding;
         }
 
-        [Key(0)]
         public string Name { get; set; }
 
-        [Key(1)]
         public bool Adding { get; set; }
 
     }

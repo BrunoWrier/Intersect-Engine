@@ -2,6 +2,8 @@
 using System.Security.Cryptography;
 using System.Text;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Utilities
 {
 
@@ -9,7 +11,7 @@ namespace Intersect.Utilities
     {
 
         /// <inheritdoc cref="CreateNamed(Guid, byte[])" />
-        public static Guid CreateNamed(Guid namespaceId, string name)
+        public static Guid CreateNamed(Guid namespaceId, [NotNull] string name)
         {
             return CreateNamed(namespaceId, Encoding.UTF8.GetBytes(name));
         }
@@ -20,7 +22,7 @@ namespace Intersect.Utilities
         /// <param name="namespaceId">the UUID of the namespace</param>
         /// <param name="name">the name to generate the UUID for</param>
         /// <returns>a Version 5 UUID generated from the provided namespace UUID and text name</returns>
-        public static Guid CreateNamed(Guid namespaceId, byte[] name)
+        public static Guid CreateNamed(Guid namespaceId, [NotNull] byte[] name)
         {
             if (name.Length < 1)
             {

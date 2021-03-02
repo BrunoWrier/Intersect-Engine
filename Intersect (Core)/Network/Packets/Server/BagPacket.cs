@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class BagPacket : IntersectPacket
+
+    public class BagPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public BagPacket()
-        {
-        }
 
         public BagPacket(int slots, bool close)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Server
             Close = close;
         }
 
-        [Key(0)]
         public int Slots { get; set; }
 
-        [Key(1)]
         public bool Close { get; set; }
 
     }

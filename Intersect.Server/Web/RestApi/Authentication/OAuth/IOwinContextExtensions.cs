@@ -3,6 +3,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
+using JetBrains.Annotations;
+
 using Microsoft.Owin;
 
 namespace Intersect.Server.Web.RestApi.Authentication.OAuth
@@ -20,7 +22,8 @@ namespace Intersect.Server.Web.RestApi.Authentication.OAuth
         /// </summary>
         /// <param name="owinContext"></param>
         /// <returns></returns>
-        public static async Task ConvertFromJsonToFormBody(this IOwinContext owinContext)
+        [NotNull]
+        public static async Task ConvertFromJsonToFormBody([NotNull] this IOwinContext owinContext)
         {
             Debug.Assert(owinContext.Request != null);
             var request = owinContext.Request;

@@ -1,22 +1,16 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class PlayerDeathPacket : IntersectPacket
+
+    public class PlayerDeathPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public PlayerDeathPacket()
-        {
-        }
 
         public PlayerDeathPacket(Guid playerId)
         {
             PlayerId = playerId;
         }
 
-        [Key(0)]
         public Guid PlayerId { get; set; }
 
     }

@@ -30,8 +30,6 @@ namespace Intersect.Server.Entities.Events
 
         public Guid MapId;
 
-        public MapInstance MapInstance;
-
         private Dictionary<string, string> mParams = new Dictionary<string, string>();
 
         public int PageIndex;
@@ -53,24 +51,23 @@ namespace Intersect.Server.Entities.Events
 
         public int Y;
 
-        public Event(Guid instanceId, MapInstance map, Player player, EventBase baseEvent)
+        public Event(Guid instanceId, Guid map, Player player, EventBase baseEvent)
         {
             Id = instanceId;
-            MapId = map?.Id ?? Guid.Empty;
-            MapInstance = map;
+            MapId = map;
             Player = player;
             SelfSwitch = new bool[4];
             BaseEvent = baseEvent;
+            MapId = map;
             X = baseEvent.SpawnX;
             Y = baseEvent.SpawnY;
         }
 
-        public Event(Guid instanceId, EventBase baseEvent, MapInstance map) //Global constructor
+        public Event(Guid instanceId, EventBase baseEvent, Guid map) //Global constructor
         {
             Id = instanceId;
             Global = true;
-            MapId = map?.Id ?? Guid.Empty;
-            MapInstance = map;
+            MapId = map;
             BaseEvent = baseEvent;
             SelfSwitch = new bool[4];
             GlobalPageInstance = new EventPageInstance[BaseEvent.Pages.Count];
@@ -84,21 +81,17 @@ namespace Intersect.Server.Entities.Events
 
         public bool[] SelfSwitch { get; set; }
 
-        public void Update(long timeMs, MapInstance map)
+        public void Update(long timeMs)
         {
             var sendLeave = false;
             var originalPageInstance = PageInstance;
             if (PageInstance != null)
             {
                 //Check for despawn
-                if (PageInstance.ShouldDespawn(map))
+                if (PageInstance.ShouldDespawn())
                 {
                     X = PageInstance.X;
                     Y = PageInstance.Y;
-                    if (PageInstance.GlobalClone != null)
-                    {
-                        Player.GlobalPageInstanceLookup.TryRemove(PageInstance.GlobalClone, out Event val);
-                    }
                     PageInstance = null;
                     CallStack.Clear();
                     PlayerHasDied = false;
@@ -123,14 +116,6 @@ namespace Intersect.Server.Entities.Events
                     if (CallStack.Count > 0)
                     {
                         var curStack = CallStack.Peek();
-                        if (curStack == null)
-                        {
-                            Log.Error("Curstack variable in event update is null.. not sure how nor how to recover so just gonna let this crash now..");
-                        }
-                        if (Player == null)
-                        {
-                            Log.Error("Player variable in event update is null.. not sure how nor how to recover so just gonna let this crash now..");
-                        }
                         if (curStack.WaitingForResponse == CommandInstance.EventResponse.Shop && Player.InShop == null)
                         {
                             curStack.WaitingForResponse = CommandInstance.EventResponse.None;
@@ -160,8 +145,8 @@ namespace Intersect.Server.Entities.Events
                         }
 
                         var commandsExecuted = 0;
-                        while (curStack != null && curStack.WaitingForResponse == CommandInstance.EventResponse.None &&
-                               !(PageInstance?.ShouldDespawn(map) ?? false) &&
+                        while (curStack.WaitingForResponse == CommandInstance.EventResponse.None &&
+                               !PageInstance.ShouldDespawn() &&
                                commandsExecuted < Options.EventWatchdogKillThreshhold)
                         {
                             if (curStack.WaitingForRoute != Guid.Empty)
@@ -245,18 +230,19 @@ namespace Intersect.Server.Entities.Events
                                 if (Player.Power.IsModerator)
                                 {
                                     PacketSender.SendChatMsg(
-                                        Player, Strings.Events.watchdogkillcommon.ToString(BaseEvent.Name), ChatMessageType.Error, Color.Red
+                                        Player, Strings.Events.watchdogkillcommon.ToString(BaseEvent.Name), Color.Red
                                     );
                                 }
                             }
                             else
                             {
+                                var map = MapInstance.Get(this.BaseEvent.MapId);
                                 Log.Error(Strings.Events.watchdogkill.ToString(map.Name, BaseEvent.Name));
                                 if (Player.Power.IsModerator)
                                 {
                                     PacketSender.SendChatMsg(
                                         Player, Strings.Events.watchdogkill.ToString(map.Name, BaseEvent.Name),
-                                        ChatMessageType.Error, Color.Red
+                                        Color.Red
                                     );
                                 }
                             }
@@ -282,18 +268,12 @@ namespace Intersect.Server.Entities.Events
                     {
                         if (Global)
                         {
-                            var globalEvent = MapInstance.Get(MapId).GetGlobalEventInstance(BaseEvent);
-                            if (globalEvent != null)
+                            if (MapInstance.Get(MapId).GetGlobalEventInstance(BaseEvent) != null)
                             {
                                 PageInstance = new EventPageInstance(
                                     BaseEvent, BaseEvent.Pages[i], BaseEvent.Id, MapId, this, Player,
-                                    globalEvent.GlobalPageInstance[i]
+                                    MapInstance.Get(MapId).GetGlobalEventInstance(BaseEvent).GlobalPageInstance[i]
                                 );
-
-                                if (PageInstance.GlobalClone != null)
-                                {
-                                    Player.GlobalPageInstanceLookup.AddOrUpdate(globalEvent.GlobalPageInstance[i], this, (key, oldValue) => this);
-                                }
 
                                 sendLeave = false;
                                 PageIndex = i;

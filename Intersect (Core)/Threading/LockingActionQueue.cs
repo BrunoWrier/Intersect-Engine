@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Threading;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Threading
 {
 
     public class LockingActionQueue
     {
 
-        private readonly object mLockObject;
+        [NotNull] private readonly object mLockObject;
 
         private Action mNextAction;
 
@@ -15,11 +17,12 @@ namespace Intersect.Threading
         {
         }
 
-        public LockingActionQueue(object lockObjectObject)
+        public LockingActionQueue([NotNull] object lockObjectObject)
         {
             mLockObject = lockObjectObject;
         }
 
+        [CanBeNull]
         public Action NextAction
         {
             get

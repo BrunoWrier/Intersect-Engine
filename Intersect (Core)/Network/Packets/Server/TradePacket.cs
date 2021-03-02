@@ -1,21 +1,14 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class TradePacket : IntersectPacket
+
+    public class TradePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public TradePacket()
-        {
-        }
 
         public TradePacket(string partnerName)
         {
             TradePartner = partnerName;
         }
 
-        [Key(0)]
         public string TradePartner { get; set; }
 
     }

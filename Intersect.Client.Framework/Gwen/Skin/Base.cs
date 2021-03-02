@@ -4,6 +4,7 @@ using Intersect.Client.Framework.Graphics;
 using System;
 
 #if DEBUG || DIAGNOSTIC
+using Intersect.Logging;
 #endif
 
 namespace Intersect.Client.Framework.Gwen.Skin

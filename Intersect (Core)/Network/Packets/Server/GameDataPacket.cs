@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class GameDataPacket : IntersectPacket
+
+    public class GameDataPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public GameDataPacket()
-        {
-        }
 
         public GameDataPacket(GameObjectPacket[] gameObjects, string colorsJson)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Server
             ColorsJson = colorsJson;
         }
 
-        [Key(0)]
         public GameObjectPacket[] GameObjects { get; set; }
 
-        [Key(1)]
         public string ColorsJson { get; set; }
 
     }

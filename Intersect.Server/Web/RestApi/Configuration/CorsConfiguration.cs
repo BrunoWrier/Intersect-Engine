@@ -6,6 +6,8 @@ using System.Web.Cors;
 
 using Intersect.Serialization.Json;
 
+using JetBrains.Annotations;
+
 using Microsoft.Owin.Cors;
 
 using Newtonsoft.Json;
@@ -107,7 +109,7 @@ namespace Intersect.Server.Web.RestApi.Configuration
 
         private static void AddCommaSeparatedValuesToCollection(
             string commaSeparatedValues,
-            ICollection<string> collection
+            [NotNull] ICollection<string> collection
         )
         {
             commaSeparatedValues?.Split(',')

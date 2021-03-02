@@ -30,7 +30,7 @@ namespace Intersect.Network.Lidgren
 
         public byte[] ToBytes()
         {
-            return Buffer?.ReadBytes((int)Length);
+            return Buffer?.Data;
         }
 
         public bool Has(long bytes)
@@ -268,7 +268,7 @@ namespace Intersect.Network.Lidgren
             if (nullTerminated)
             {
                 var position = Buffer?.PositionInBytes ?? int.MaxValue;
-                var buffer = Buffer?.PeekDataBuffer() ?? Array.Empty<byte>();
+                var buffer = Buffer?.PeekDataBuffer() ?? new byte[0];
                 while (Buffer?.LengthBytes - position > 0)
                 {
                     if (buffer[position] == 0)

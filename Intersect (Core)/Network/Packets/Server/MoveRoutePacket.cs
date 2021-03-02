@@ -1,21 +1,14 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class MoveRoutePacket : IntersectPacket
+
+    public class MoveRoutePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public MoveRoutePacket()
-        {
-        }
 
         public MoveRoutePacket(bool active)
         {
             Active = active;
         }
 
-        [Key(0)]
         public bool Active { get; set; }
 
     }

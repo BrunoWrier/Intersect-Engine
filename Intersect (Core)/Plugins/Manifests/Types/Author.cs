@@ -1,5 +1,7 @@
 ﻿using Intersect.Utilities;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 using System;
@@ -22,6 +24,7 @@ namespace Intersect.Plugins.Manifests.Types
         ///
         /// Can be summarized as <code>Name[ &lt;Email&gt;][ (Homepage)]</code>
         /// </summary>
+        [NotNull]
         public static readonly Regex AuthorStringExpression =
             new Regex(@"^\s*(.+?)(?:\s+<([^>]+)>)?(?:\s+\(([^\\)]+)\))?\s*$");
 
@@ -37,16 +40,19 @@ namespace Intersect.Plugins.Manifests.Types
         /// <summary>
         /// Email address of the <see cref="Author"/> (not validated).
         /// </summary>
+        [NotNull]
         public readonly string Email;
 
         /// <summary>
         /// Homepage (URL) of the <see cref="Author"/> (not validated).
         /// </summary>
+        [NotNull]
         public readonly string Homepage;
 
         /// <summary>
         /// Name of the <see cref="Author"/>.
         /// </summary>
+        [NotNull]
         public readonly string Name;
 
         /// <summary>
@@ -65,7 +71,7 @@ namespace Intersect.Plugins.Manifests.Types
         /// <exception cref="ArgumentNullException">thrown if <paramref name="authorString"/> is null, empty, or whitespace</exception>
         /// <exception cref="ArgumentException">thrown if <paramref name="authorString"/> does not match the format defined by <see cref="AuthorStringExpression" /></exception>
         /// <seealso cref="AuthorStringExpression"/>
-        public Author(string authorString)
+        public Author([CanBeNull] string authorString)
         {
             if (string.IsNullOrWhiteSpace(authorString))
             {
@@ -91,7 +97,7 @@ namespace Intersect.Plugins.Manifests.Types
         /// <param name="email">the email address of the <see cref="Author"/></param>
         /// <param name="homepage">the homepage of the <see cref="Author"/></param>
         [JsonConstructor]
-        public Author(string name, string email, string homepage = null)
+        public Author([NotNull] string name, [NotNull] string email, [CanBeNull] string homepage = null)
         {
             Name = name;
             Email = email;
@@ -107,6 +113,7 @@ namespace Intersect.Plugins.Manifests.Types
         /// <summary>
         /// Gets the parts as an enumerable for <see cref="CompareTo(Author)"/>.
         /// </summary>
+        [NotNull]
         private IEnumerable<string> Parts => new[] {Name, Email, Homepage};
 
         #endregion Properties
@@ -151,7 +158,7 @@ namespace Intersect.Plugins.Manifests.Types
         /// Converts a <see cref="string"/> to an <see cref="Author"/>.
         /// </summary>
         /// <param name="authorString">an <see cref="Author"/> <see cref="string"/></param>
-        public static implicit operator Author(string authorString) =>
+        public static implicit operator Author([CanBeNull] string authorString) =>
             authorString == null ? Empty : new Author(authorString);
 
         /// <summary>

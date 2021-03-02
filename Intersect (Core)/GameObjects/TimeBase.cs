@@ -37,7 +37,7 @@ namespace Intersect.GameObjects
 
         public void LoadFromJson(string json)
         {
-            JsonConvert.PopulateObject(json, this);
+            JsonConvert.PopulateObject(json, sTimeBase);
         }
 
         public string GetInstanceJson()

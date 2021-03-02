@@ -20,6 +20,8 @@ using Intersect.Server.Web.RestApi.Payloads;
 using Intersect.Server.Web.RestApi.Types;
 using Intersect.Utilities;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Web.RestApi.Routes.V1
 {
 
@@ -129,7 +131,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, $@"Invalid username '{user.Username}'.");
             }
 
-            if (Database.PlayerData.User.UserExists(user.Username))
+            if (DbInterface.AccountExists(user.Username))
             {
                 return Request.CreateErrorResponse(
                     HttpStatusCode.BadRequest, $@"Account already exists with username '{user.Username}'."
@@ -137,7 +139,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
             }
             else
             {
-                if (Database.PlayerData.User.UserExists(user.Email))
+                if (DbInterface.EmailInUse(user.Email))
                 {
                     return Request.CreateErrorResponse(
                         HttpStatusCode.BadRequest, $@"Account already with email '{user.Email}'."
@@ -248,13 +250,14 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.NotFound, $@"No user with name '{userName}'.");
             }
 
-            if (Database.PlayerData.User.UserExists(email))
+            if (DbInterface.EmailInUse(email))
             {
                 return Request.CreateErrorResponse(HttpStatusCode.Conflict, @"Email address already in use.");
             }
 
             user.Email = email;
-            user.Save();
+
+            DbInterface.SavePlayerDatabaseAsync();
 
             return user;
         }
@@ -283,13 +286,14 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.NotFound, $@"No user with id '{userId}'.");
             }
 
-            if (Database.PlayerData.User.UserExists(email))
+            if (DbInterface.EmailInUse(email))
             {
                 return Request.CreateErrorResponse(HttpStatusCode.Conflict, @"Email address already in use.");
             }
 
             user.Email = email;
-            user.Save();
+
+            DbInterface.SavePlayerDatabaseAsync();
 
             return user;
         }
@@ -322,13 +326,14 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.Forbidden, @"Invalid credentials.");
             }
 
-            if (Database.PlayerData.User.UserExists(email))
+            if (DbInterface.EmailInUse(email))
             {
                 return Request.CreateErrorResponse(HttpStatusCode.Conflict, @"Email address already in use.");
             }
 
             user.Email = email;
-            user.Save();
+
+            DbInterface.SavePlayerDatabaseAsync();
 
             return user;
         }
@@ -361,13 +366,14 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.Forbidden, @"Invalid credentials.");
             }
 
-            if (Database.PlayerData.User.UserExists(email))
+            if (DbInterface.EmailInUse(email))
             {
                 return Request.CreateErrorResponse(HttpStatusCode.Conflict, @"Email address already in use.");
             }
 
             user.Email = email;
-            user.Save();
+
+            DbInterface.SavePlayerDatabaseAsync();
 
             return user;
         }
@@ -460,7 +466,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.Forbidden, @"Failed to update password.");
             }
 
-            user.Save();
+            DbInterface.SavePlayerDatabaseAsync();
 
             return "Password updated.";
         }
@@ -487,7 +493,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.Forbidden, @"Failed to update password.");
             }
 
-            user.Save();
+            DbInterface.SavePlayerDatabaseAsync();
 
             return Request.CreateMessageResponse(HttpStatusCode.OK, "Password Updated.");
         }
@@ -515,7 +521,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.Forbidden, @"Invalid credentials.");
             }
 
-            user.Save();
+            DbInterface.SavePlayerDatabaseAsync();
 
             return Request.CreateMessageResponse(HttpStatusCode.OK, "Password Updated.");
         }
@@ -543,7 +549,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 return Request.CreateErrorResponse(HttpStatusCode.Forbidden, @"Invalid credentials.");
             }
 
-            user.Save();
+            DbInterface.SavePlayerDatabaseAsync();
 
             return "Password updated.";
         }
@@ -618,7 +624,8 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
             [FromBody] AdminActionParameters actionParameters
         )
         {
-            if (!Enum.TryParse<AdminActions>(act, true, out var adminAction))
+            AdminActions adminAction;
+            if (!Enum.TryParse<AdminActions>(act, true, out adminAction))
             {
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, @"Invalid action.");
             }
@@ -646,7 +653,8 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
             [FromBody] AdminActionParameters actionParameters
         )
         {
-            if (!Enum.TryParse<AdminActions>(act, true, out var adminAction))
+            AdminActions adminAction;
+            if (!Enum.TryParse<AdminActions>(act, true, out adminAction))
             {
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, @"Invalid action.");
             }
@@ -667,8 +675,8 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
         }
 
         private object DoAdminActionOnUser(
-            Func<Tuple<Client, User>> fetch,
-            Func<HttpResponseMessage> onError,
+            [NotNull] Func<Tuple<Client, User>> fetch,
+            [NotNull] Func<HttpResponseMessage> onError,
             AdminActions adminAction,
             AdminActionParameters actionParameters
         )
@@ -787,11 +795,7 @@ namespace Intersect.Server.Web.RestApi.Routes.V1
                 case AdminActions.Kill:
                     if (client != null && client.Entity != null)
                     {
-                        lock (client.Entity.EntityLock)
-                        {
-                            client.Entity.Die();
-                        }
-                        
+                        client.Entity.Die();
                         PacketSender.SendGlobalMsg(Strings.Player.serverkilled.ToString(player?.Name));
 
                         return Request.CreateMessageResponse(

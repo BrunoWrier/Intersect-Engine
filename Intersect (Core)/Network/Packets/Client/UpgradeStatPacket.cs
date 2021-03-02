@@ -1,21 +1,14 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Client
+﻿namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class UpgradeStatPacket : IntersectPacket
+
+    public class UpgradeStatPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public UpgradeStatPacket()
-        {
-        }
 
         public UpgradeStatPacket(byte stat)
         {
             Stat = stat;
         }
 
-        [Key(0)]
         public byte Stat { get; set; }
 
     }

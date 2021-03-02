@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.CommandParsing.Arguments
 {
 
@@ -8,14 +10,19 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
 
         char ShortName { get; }
 
+        [NotNull]
         string Name { get; }
 
+        [NotNull]
         string Description { get; }
 
+        [NotNull]
         Type ValueType { get; }
 
+        [CanBeNull]
         object ValueTypeDefault { get; }
 
+        [CanBeNull]
         object DefaultValue { get; }
 
         bool HasShortName { get; }
@@ -32,13 +39,15 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
 
         bool IsPositional { get; }
 
+        [CanBeNull]
         string Delimeter { get; }
 
         bool IsRequired(ParserContext parserContext);
 
+        [CanBeNull]
         TValue DefaultValueAsType<TValue>();
 
-        bool IsValueAllowed(object value);
+        bool IsValueAllowed([CanBeNull] object value);
 
     }
 

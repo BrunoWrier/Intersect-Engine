@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class HoldPlayerPacket : IntersectPacket
+
+    public class HoldPlayerPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public HoldPlayerPacket()
-        {
-        }
 
         public HoldPlayerPacket(Guid eventId, Guid mapId, bool releasing)
         {
@@ -18,13 +13,10 @@ namespace Intersect.Network.Packets.Server
             Releasing = releasing;
         }
 
-        [Key(0)]
         public Guid EventId { get; set; }
 
-        [Key(1)]
         public Guid MapId { get; set; }
 
-        [Key(2)]
         public bool Releasing { get; set; }
 
     }

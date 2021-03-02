@@ -1,23 +1,26 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Core.ExperimentalFeatures
 {
 
     public struct ExperimentalFlagAlias : IExperimentalFlag
     {
 
-        private readonly IFlagProvider mFlagProvider;
+        [NotNull] private readonly IFlagProvider mFlagProvider;
 
-        private readonly string mTargetName;
+        [NotNull] private readonly string mTargetName;
 
         private Guid mCachedGuid;
 
+        [NotNull]
         public string Name { get; }
 
         public ExperimentalFlagAlias(
-            IFlagProvider flagProvider,
-            string targetName,
-            string aliasName
+            [NotNull] IFlagProvider flagProvider,
+            [NotNull] string targetName,
+            [NotNull] string aliasName
         )
         {
             if (string.IsNullOrWhiteSpace(targetName))

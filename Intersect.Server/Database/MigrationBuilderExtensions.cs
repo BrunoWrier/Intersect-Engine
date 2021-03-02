@@ -3,6 +3,8 @@ using System.Linq;
 
 using Intersect.Config;
 
+using JetBrains.Annotations;
+
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
@@ -13,7 +15,7 @@ namespace Intersect.Server.Database
     public static class MigrationBuilderExtensions
     {
 
-        public static DatabaseOptions.DatabaseType GetDatabaseType(this MigrationBuilder migrationBuilder)
+        public static DatabaseOptions.DatabaseType GetDatabaseType([NotNull] this MigrationBuilder migrationBuilder)
         {
             switch (migrationBuilder.ActiveProvider)
             {
@@ -35,9 +37,10 @@ namespace Intersect.Server.Database
         /// <param name="suppressTransaction"></param>
         /// <returns></returns>
         /// <see cref="MigrationBuilder.Sql(string, bool)"/>
+        [NotNull]
         public static OperationBuilder<SqlOperation> Sql(
-            this MigrationBuilder migrationBuilder,
-            params (DatabaseOptions.DatabaseType DatabaseType, string Sql)[] conditionalQueries
+            [NotNull] this MigrationBuilder migrationBuilder,
+            [NotNull] params (DatabaseOptions.DatabaseType DatabaseType, string Sql)[] conditionalQueries
         )
         {
             return migrationBuilder.Sql(
@@ -54,8 +57,10 @@ namespace Intersect.Server.Database
         /// <param name="conditionalQueries"></param>
         /// <returns></returns>
         /// <see cref="MigrationBuilder.Sql(string, bool)"/>
+        [NotNull]
         public static OperationBuilder<SqlOperation> Sql(
-            this MigrationBuilder migrationBuilder,
+            [NotNull] this MigrationBuilder migrationBuilder,
+            [NotNull]
             params (DatabaseOptions.DatabaseType DatabaseType, string Sql, bool SuppressTransaction)[]
                 conditionalQueries
         )

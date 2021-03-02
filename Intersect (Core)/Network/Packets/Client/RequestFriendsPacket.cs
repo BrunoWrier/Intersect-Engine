@@ -1,9 +1,7 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Client
+﻿namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class RequestFriendsPacket : IntersectPacket
+
+    public class RequestFriendsPacket : CerasPacket
     {
 
     }

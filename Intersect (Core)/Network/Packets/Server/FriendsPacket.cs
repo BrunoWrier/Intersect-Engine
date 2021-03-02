@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class FriendsPacket : IntersectPacket
+
+    public class FriendsPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public FriendsPacket()
-        {
-        }
 
         public FriendsPacket(Dictionary<string, string> onlineFriends, string[] offlineFriends)
         {
@@ -17,10 +12,8 @@ namespace Intersect.Network.Packets.Server
             OfflineFriends = offlineFriends;
         }
 
-        [Key(0)]
         public Dictionary<string, string> OnlineFriends { get; set; }
 
-        [Key(1)]
         public string[] OfflineFriends { get; set; }
 
     }

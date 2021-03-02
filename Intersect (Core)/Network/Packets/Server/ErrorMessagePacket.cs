@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class ErrorMessagePacket : IntersectPacket
+
+    public class ErrorMessagePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public ErrorMessagePacket()
-        {
-        }
 
         public ErrorMessagePacket(string header, string error)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Server
             Error = error;
         }
 
-        [Key(0)]
         public string Header { get; set; }
 
-        [Key(1)]
         public string Error { get; set; }
 
     }

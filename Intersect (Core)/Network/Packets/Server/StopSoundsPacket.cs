@@ -1,9 +1,7 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class StopSoundsPacket : IntersectPacket
+
+    public class StopSoundsPacket : CerasPacket
     {
 
     }

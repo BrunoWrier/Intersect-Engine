@@ -2,7 +2,10 @@
 
 using Intersect.Client.General;
 
+using JetBrains.Annotations;
+
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace Intersect.Client.MonoGame.Audio
 {
@@ -21,7 +24,7 @@ namespace Intersect.Client.MonoGame.Audio
         private int mVolume;
 
         // ReSharper disable once SuggestBaseTypeForParameter
-        public MonoMusicInstance(MonoMusicSource source) : base(source)
+        public MonoMusicInstance([NotNull] MonoMusicSource source) : base(source)
         {
             //Only allow one music player at a time
             if (Instance != null)

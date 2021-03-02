@@ -1,21 +1,14 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class PasswordResetResultPacket : IntersectPacket
+
+    public class PasswordResetResultPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public PasswordResetResultPacket()
-        {
-        }
 
         public PasswordResetResultPacket(bool succeeded)
         {
             Succeeded = succeeded;
         }
 
-        [Key(0)]
         public bool Succeeded { get; set; }
 
     }

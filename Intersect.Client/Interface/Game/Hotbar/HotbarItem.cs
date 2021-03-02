@@ -427,27 +427,11 @@ namespace Intersect.Client.Interface.Game.Hotbar
 
                 if (mIsFaded)
                 {
-                    if (mCurrentSpell != null)
-                    {
-                        mContentPanel.RenderColor = new Color(100, 255, 255, 255);
-                    }
-                    
-                    if (mCurrentItem != null)
-                    {
-                        mContentPanel.RenderColor = new Color(100, mCurrentItem.Color.R, mCurrentItem.Color.G, mCurrentItem.Color.B);
-                    } 
+                    mContentPanel.RenderColor = new Color(100, 255, 255, 255);
                 }
                 else
                 {
-                    if (mCurrentSpell != null)
-                    {
-                        mContentPanel.RenderColor = Color.White;
-                    }
-                    
-                    if (mCurrentItem != null)
-                    {
-                        mContentPanel.RenderColor = mCurrentItem.Color;
-                    }
+                    mContentPanel.RenderColor = Color.White;
                 }
             }
 

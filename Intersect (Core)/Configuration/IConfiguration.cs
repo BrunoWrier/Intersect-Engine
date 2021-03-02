@@ -1,4 +1,6 @@
-﻿namespace Intersect.Configuration
+﻿using JetBrains.Annotations;
+
+namespace Intersect.Configuration
 {
 
     /// <summary>
@@ -14,7 +16,7 @@
         /// <param name="filePath">the file to load from</param>
         /// <param name="failQuietly">do not throw an exception if an error is encountered, default false</param>
         /// <returns></returns>
-        TConfiguration Load(string filePath, bool failQuietly = false);
+        TConfiguration Load([NotNull] string filePath, bool failQuietly = false);
 
         /// <summary>
         /// Persists configuration from this instance into the specified file.
@@ -22,7 +24,7 @@
         /// <param name="filePath">the file to save to</param>
         /// <param name="failQuietly">do not throw an exception if an error is encountered, default false</param>
         /// <returns></returns>
-        TConfiguration Save(string filePath, bool failQuietly = false);
+        TConfiguration Save([NotNull] string filePath, bool failQuietly = false);
 
     }
 

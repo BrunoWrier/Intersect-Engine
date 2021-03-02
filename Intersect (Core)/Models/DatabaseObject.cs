@@ -6,6 +6,8 @@ using System.Linq;
 using Intersect.Collections;
 using Intersect.Enums;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect.Models
@@ -37,6 +39,7 @@ namespace Intersect.Models
             .Select(pair => pair.Value?.Name ?? Deleted)
             .ToArray();
 
+        [NotNull]
         public static DatabaseObjectLookup Lookup => LookupUtils.GetLookup(typeof(TObject));
 
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

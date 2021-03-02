@@ -2,6 +2,8 @@
 
 using Intersect.Client.General;
 
+using JetBrains.Annotations;
+
 using Microsoft.Xna.Framework.Audio;
 
 namespace Intersect.Client.MonoGame.Audio
@@ -17,7 +19,7 @@ namespace Intersect.Client.MonoGame.Audio
         private int mVolume;
 
         // ReSharper disable once SuggestBaseTypeForParameter
-        public MonoSoundInstance(MonoSoundSource source) : base(source)
+        public MonoSoundInstance([NotNull] MonoSoundSource source) : base(source)
         {
             mInstance = Source.Effect?.CreateInstance();
         }

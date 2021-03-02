@@ -3,6 +3,8 @@ using Intersect.Localization;
 using Intersect.Server.Core.CommandParsing;
 using Intersect.Server.Core.CommandParsing.Arguments;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.Commands
 {
 
@@ -10,13 +12,14 @@ namespace Intersect.Server.Core.Commands
     {
 
         protected TargettedCommand(
-            LocaleCommand command,
-            LocaleArgument argument,
-            params ICommandArgument[] arguments
+            [NotNull] LocaleCommand command,
+            [NotNull] LocaleArgument argument,
+            [NotNull] params ICommandArgument[] arguments
         ) : base(command, arguments.Prepend(new VariableArgument<string>(argument, RequiredIfNotHelp, true)))
         {
         }
 
+        [NotNull]
         protected VariableArgument<string> Target => FindArgumentOrThrow<VariableArgument<string>>();
 
         protected override void HandleValue(ServerContext context, ParserResult result)
@@ -26,15 +29,15 @@ namespace Intersect.Server.Core.Commands
         }
 
         protected abstract TTarget FindTarget(
-            ServerContext context,
-            ParserResult result,
-            string targetName
+            [NotNull] ServerContext context,
+            [NotNull] ParserResult result,
+            [CanBeNull] string targetName
         );
 
         protected abstract void HandleTarget(
-            ServerContext context,
-            ParserResult result,
-            TTarget target
+            [NotNull] ServerContext context,
+            [NotNull] ParserResult result,
+            [CanBeNull] TTarget target
         );
 
     }

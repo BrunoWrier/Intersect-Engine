@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 
+using JetBrains.Annotations;
+
 using Microsoft.Owin;
 
 using Newtonsoft.Json;
@@ -25,7 +27,8 @@ namespace Intersect.Server.Web.RestApi.Authentication.OAuth
         /// </summary>
         /// <param name="owinRequest"></param>
         /// <returns></returns>
-        public static async Task<Dictionary<string, string>> JsonBodyToMap(this IOwinRequest owinRequest)
+        [NotNull]
+        public static async Task<Dictionary<string, string>> JsonBodyToMap([NotNull] this IOwinRequest owinRequest)
         {
             Debug.Assert(owinRequest.Body != null);
             using (var streamReader = new StreamReader(owinRequest.Body))
@@ -41,8 +44,9 @@ namespace Intersect.Server.Web.RestApi.Authentication.OAuth
         /// </summary>
         /// <param name="owinRequest"></param>
         /// <returns></returns>
+        [NotNull]
         public static async Task<IEnumerable<string>> JsonBodyToEncodedParameterStrings(
-            this IOwinRequest owinRequest
+            [NotNull] this IOwinRequest owinRequest
         )
         {
             return (await owinRequest.JsonBodyToMap()).Select(

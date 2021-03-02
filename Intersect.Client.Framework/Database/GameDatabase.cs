@@ -10,8 +10,6 @@ namespace Intersect.Client.Framework.Database
 
         public bool HideOthersOnWindowOpen;
 
-        public bool TargetAccountDirection;
-
         //Preferences
         public int MusicVolume;
 
@@ -20,8 +18,6 @@ namespace Intersect.Client.Framework.Database
         public int TargetFps;
 
         public int TargetResolution;
-
-        public bool StickyTarget;
 
         //Saving password, other stuff we don't want in the games directory
         public abstract void SavePreference(string key, object value);
@@ -48,8 +44,6 @@ namespace Intersect.Client.Framework.Database
             TargetFps = LoadPreference("Fps", 0);
             FullScreen = LoadPreference("Fullscreen", false);
             HideOthersOnWindowOpen = LoadPreference("HideOthersOnWindowOpen", true);
-            TargetAccountDirection = LoadPreference("TargetAccountDirection", false);
-            StickyTarget = LoadPreference("StickyTarget", true);
         }
 
         public virtual void SavePreferences()
@@ -60,8 +54,6 @@ namespace Intersect.Client.Framework.Database
             SavePreference("Resolution", TargetResolution.ToString());
             SavePreference("Fps", TargetFps.ToString());
             SavePreference("HideOthersOnWindowOpen", HideOthersOnWindowOpen.ToString());
-            SavePreference("TargetAccountDirection", TargetAccountDirection.ToString());
-            SavePreference("StickyTarget", StickyTarget.ToString());
         }
 
         public abstract bool LoadConfig();

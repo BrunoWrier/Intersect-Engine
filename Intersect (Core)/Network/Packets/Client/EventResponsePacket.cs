@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class EventResponsePacket : IntersectPacket
+
+    public class EventResponsePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public EventResponsePacket()
-        {
-        }
 
         public EventResponsePacket(Guid eventId, byte response)
         {
@@ -17,10 +12,8 @@ namespace Intersect.Network.Packets.Client
             Response = response;
         }
 
-        [Key(0)]
         public Guid EventId { get; set; }
 
-        [Key(1)]
         public byte Response { get; set; }
 
     }

@@ -3,6 +3,8 @@ using System.Collections.Immutable;
 
 using Intersect.Server.Core.CommandParsing.Commands;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.CommandParsing.Errors
 {
 
@@ -36,17 +38,21 @@ namespace Intersect.Server.Core.CommandParsing.Errors
 
         public bool IsFatal { get; }
 
+        [NotNull]
         public string Message { get; }
 
+        [CanBeNull]
         public Exception Exception { get; }
 
         public ImmutableArray<string> Arguments { get; }
 
+        [NotNull]
         public ParserResult AsResult(ICommand command = null)
         {
             return new ParserResult(command, this);
         }
 
+        [NotNull]
         public ParserResult<TCommand> AsResult<TCommand>(TCommand command) where TCommand : ICommand
         {
             return new ParserResult<TCommand>(command, this);

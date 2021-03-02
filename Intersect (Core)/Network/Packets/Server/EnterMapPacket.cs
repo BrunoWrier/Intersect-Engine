@@ -1,22 +1,16 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class EnterMapPacket : IntersectPacket
+
+    public class EnterMapPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public EnterMapPacket()
-        {
-        }
 
         public EnterMapPacket(Guid mapId)
         {
             MapId = mapId;
         }
 
-        [Key(0)]
         public Guid MapId { get; set; }
 
     }

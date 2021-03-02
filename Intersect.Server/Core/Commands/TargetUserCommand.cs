@@ -4,6 +4,8 @@ using Intersect.Server.Core.CommandParsing.Arguments;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.Commands
 {
 
@@ -11,16 +13,16 @@ namespace Intersect.Server.Core.Commands
     {
 
         protected TargetUserCommand(
-            LocaleCommand command,
-            LocaleArgument argument,
-            params ICommandArgument[] arguments
+            [NotNull] LocaleCommand command,
+            [NotNull] LocaleArgument argument,
+            [NotNull] params ICommandArgument[] arguments
         ) : base(command, argument, arguments)
         {
         }
 
         protected override User FindTarget(ServerContext context, ParserResult result, string targetName)
         {
-            return string.IsNullOrWhiteSpace(targetName) ? null : User.Find(targetName);
+            return string.IsNullOrWhiteSpace(targetName) ? null : DbInterface.GetUser(targetName);
         }
 
     }

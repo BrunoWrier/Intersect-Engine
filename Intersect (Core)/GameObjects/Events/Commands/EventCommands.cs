@@ -181,9 +181,6 @@ namespace Intersect.GameObjects.Events.Commands
 
         public string Text { get; set; } = "";
 
-        // TODO: Expose this option to the user?
-        public ChatMessageType MessageType { get; set; } = ChatMessageType.Notice;
-
         public string Color { get; set; } = "";
 
         public ChatboxChannel Channel { get; set; } = ChatboxChannel.Player;
@@ -339,21 +336,6 @@ namespace Intersect.GameObjects.Events.Commands
 
         public long Exp { get; set; }
 
-        /// <summary>
-        /// Defines whether this event command will use a variable for processing or not.
-        /// </summary>
-        public bool UseVariable { get; set; } = false;
-
-        /// <summary>
-        /// Defines whether the variable used is a Player or Global variable.
-        /// </summary>
-        public VariableTypes VariableType { get; set; } = VariableTypes.PlayerVariable;
-
-        /// <summary>
-        /// The Variable Id to use.
-        /// </summary>
-        public Guid VariableId { get; set; }
-
     }
 
     public class ChangeLevelCommand : EventCommand
@@ -452,21 +434,6 @@ namespace Intersect.GameObjects.Events.Commands
         /// </summary>
         public ItemHandling ItemHandling { get; set; } = ItemHandling.Normal;
 
-        /// <summary>
-        /// Defines whether this event command will use a variable for processing or not.
-        /// </summary>
-        public bool UseVariable { get; set; } = false;
-
-        /// <summary>
-        /// Defines whether the variable used is a Player or Global variable.
-        /// </summary>
-        public VariableTypes VariableType { get; set; } = VariableTypes.PlayerVariable;
-
-        /// <summary>
-        /// The Variable Id to use.
-        /// </summary>
-        public Guid VariableId { get; set; }
-
         public int Quantity { get; set; }
 
         public Guid[] BranchIds { get; set; } =
@@ -511,8 +478,6 @@ namespace Intersect.GameObjects.Events.Commands
         public override EventCommandType Type { get; } = EventCommandType.EquipItem;
 
         public Guid ItemId { get; set; }
-
-        public bool Unequip { get; set; }
 
     }
 
@@ -868,80 +833,6 @@ namespace Intersect.GameObjects.Events.Commands
 
         public bool SkipCompletionEvent { get; set; }
 
-    }
-
-    /// <summary>
-    /// Defines the Event command class for the Change Player Color command.
-    /// </summary>
-    public class ChangePlayerColorCommand : EventCommand
-    {
-
-        /// <summary>
-        /// The <see cref="EventCommandType"/> of this command.
-        /// </summary>
-        public override EventCommandType Type { get; } = EventCommandType.ChangePlayerColor;
-
-        /// <summary>
-        /// The <see cref="Color"/> to apply to the player.
-        /// </summary>
-        public Color Color { get; set; } = new Color(255, 255, 255, 255);
-
-    }
-
-    public class ChangeNameCommand : EventCommand
-    {
-        //For Json Deserialization
-        public ChangeNameCommand()
-        {
-        }
-
-        public ChangeNameCommand(Dictionary<Guid, List<EventCommand>> commandLists)
-        {
-            for (var i = 0; i < BranchIds.Length; i++)
-            {
-                BranchIds[i] = Guid.NewGuid();
-                commandLists.Add(BranchIds[i], new List<EventCommand>());
-            }
-        }
-
-        public override EventCommandType Type { get; } = EventCommandType.ChangeName;
-
-        public Guid VariableId { get; set; }
-
-        public Guid[] BranchIds { get; set; } =
-            new Guid[2]; //Branch[0] is the event commands to execute when given/taken successfully, Branch[1] is for when they're not.
-
-        public override string GetCopyData(
-            Dictionary<Guid, List<EventCommand>> commandLists,
-            Dictionary<Guid, List<EventCommand>> copyLists
-        )
-        {
-            foreach (var branch in BranchIds)
-            {
-                if (branch != Guid.Empty && commandLists.ContainsKey(branch))
-                {
-                    copyLists.Add(branch, commandLists[branch]);
-                    foreach (var cmd in commandLists[branch])
-                    {
-                        cmd.GetCopyData(commandLists, copyLists);
-                    }
-                }
-            }
-
-            return base.GetCopyData(commandLists, copyLists);
-        }
-
-
-        public override void FixBranchIds(Dictionary<Guid, Guid> idDict)
-        {
-            for (var i = 0; i < BranchIds.Length; i++)
-            {
-                if (idDict.ContainsKey(BranchIds[i]))
-                {
-                    BranchIds[i] = idDict[BranchIds[i]];
-                }
-            }
-        }
     }
 
 }

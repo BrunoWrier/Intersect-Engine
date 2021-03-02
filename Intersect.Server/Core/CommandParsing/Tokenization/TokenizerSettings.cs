@@ -1,5 +1,7 @@
 ﻿using System.Collections.Immutable;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.CommandParsing.Tokenization
 {
 
@@ -17,6 +19,7 @@ namespace Intersect.Server.Core.CommandParsing.Tokenization
             Delimeter = delimeter;
         }
 
+        [NotNull]
         public static TokenizerSettings Default => new TokenizerSettings();
 
         public bool AllowQuotedStrings { get; }

@@ -2,6 +2,8 @@
 
 using Intersect.Client.Framework.Audio;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Client.MonoGame.Audio
 {
 
@@ -9,10 +11,11 @@ namespace Intersect.Client.MonoGame.Audio
     {
 
         /// <inheritdoc />
-        protected MonoAudioInstance(GameAudioSource source) : base(source)
+        protected MonoAudioInstance([NotNull] GameAudioSource source) : base(source)
         {
         }
 
+        [NotNull]
         public new TSource Source => base.Source as TSource ?? throw new InvalidOperationException();
 
     }

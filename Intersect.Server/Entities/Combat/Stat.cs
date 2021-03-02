@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,8 +13,6 @@ namespace Intersect.Server.Entities.Combat
     {
 
         private ConcurrentDictionary<SpellBase, Buff> mBuff = new ConcurrentDictionary<SpellBase, Buff>();
-
-        private Buff[] mCachedBuffs = new Buff[0];
 
         private bool mChanged;
 
@@ -37,33 +34,24 @@ namespace Intersect.Server.Entities.Combat
 
         public int Value()
         {
-            // Get our base flat and percentage stats to calculate with.
-            var flatStats = BaseStat + mOwner.StatPointAllocations[(int)mStatType];
-            var percentageStats = 0;
+            var s = BaseStat;
 
-            // Add item buffs
-            if (mOwner is Player player)
+            s += mOwner.StatPointAllocations[(int) mStatType];
+            s += mOwner.GetStatBuffs(mStatType);
+
+            //Add buffs
+            var buffs = mBuff.Values.ToArray();
+            foreach (var buff in buffs)
             {
-                var statBuffs = player.GetItemStatBuffs(mStatType);
-                flatStats += statBuffs.Item1;
-                percentageStats += statBuffs.Item2;
+                s += buff.BuffType;
             }
 
-            //Add spell buffs
-            foreach (var buff in mCachedBuffs)
+            if (s <= 0)
             {
-                flatStats += buff.FlatStatcount;
-                percentageStats += buff.PercentageStatcount;
+                s = 1; //No 0 or negative stats, will give errors elsewhere in the code (especially divide by 0 errors).
             }
 
-            // Calculate our final stat
-            var finalStat = (int)Math.Ceiling(flatStats + (flatStats * (percentageStats / 100f)));
-            if (finalStat <= 0)
-            {
-                finalStat = 1; //No 0 or negative stats, will give errors elsewhere in the code (especially divide by 0 errors).
-            }
-
-            return finalStat;
+            return s;
         }
 
         public bool Update()
@@ -77,11 +65,6 @@ namespace Intersect.Server.Entities.Combat
                 }
             }
 
-            if (changed)
-            {
-                mCachedBuffs = mBuff.Values.ToArray();
-            }
-
             changed |= mChanged;
             mChanged = false;
 
@@ -91,14 +74,12 @@ namespace Intersect.Server.Entities.Combat
         public void AddBuff(Buff buff)
         {
             mBuff.AddOrUpdate(buff.Spell, buff, (key, val) => buff);
-            mCachedBuffs = mBuff.Values.ToArray();
             mChanged = true;
         }
 
         public void Reset()
         {
             mBuff.Clear();
-            mCachedBuffs = mBuff.Values.ToArray();
         }
 
     }

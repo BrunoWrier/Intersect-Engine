@@ -1,6 +1,7 @@
 ﻿using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
 #if DEBUG || DIAGNOSTIC
+using Intersect.Logging;
 #endif
 
 using System;

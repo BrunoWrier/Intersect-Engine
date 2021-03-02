@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class NpcAggressionPacket : IntersectPacket
+
+    public class NpcAggressionPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public NpcAggressionPacket()
-        {
-        }
 
         public NpcAggressionPacket(Guid entityId, int aggression)
         {
@@ -17,10 +12,8 @@ namespace Intersect.Network.Packets.Server
             Aggression = aggression;
         }
 
-        [Key(0)]
         public Guid EntityId { get; set; }
 
-        [Key(1)]
         public int Aggression { get; set; }
 
     }

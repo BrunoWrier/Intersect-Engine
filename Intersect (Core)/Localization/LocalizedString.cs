@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect.Localization
@@ -8,13 +10,13 @@ namespace Intersect.Localization
     public class LocalizedStringConverter : JsonConverter<LocalizedString>
     {
 
-        public override void WriteJson(JsonWriter writer, LocalizedString value, JsonSerializer serializer)
+        public override void WriteJson([NotNull] JsonWriter writer, LocalizedString value, JsonSerializer serializer)
         {
             writer.WriteValue(value?.ToString());
         }
 
         public override LocalizedString ReadJson(
-            JsonReader reader,
+            [NotNull] JsonReader reader,
             Type objectType,
             LocalizedString existingValue,
             bool hasExistingValue,
@@ -30,19 +32,19 @@ namespace Intersect.Localization
     public class LocalizedString : Localized
     {
 
-        private readonly string mValue;
+        [NotNull] private readonly string mValue;
 
-        public LocalizedString(string value)
+        public LocalizedString([NotNull] string value)
         {
             mValue = value;
         }
 
-        public static implicit operator LocalizedString(string value)
+        public static implicit operator LocalizedString([NotNull] string value)
         {
             return new LocalizedString(value);
         }
 
-        public static implicit operator string(LocalizedString str)
+        public static implicit operator string([NotNull] LocalizedString str)
         {
             return str.mValue;
         }
@@ -52,6 +54,7 @@ namespace Intersect.Localization
             return mValue;
         }
 
+        [NotNull]
         public string ToString(params object[] args)
         {
             try

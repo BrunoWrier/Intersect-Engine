@@ -7,6 +7,8 @@ using System.Web.Http.Dependencies;
 
 using Intersect.Server.Web.RestApi.Configuration;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Web.RestApi.Services
 {
 
@@ -14,8 +16,8 @@ namespace Intersect.Server.Web.RestApi.Services
     {
 
         public IntersectServiceDependencyResolver(
-            ApiConfiguration apiConfiguration,
-            HttpConfiguration httpConfiguration
+            [NotNull] ApiConfiguration apiConfiguration,
+            [NotNull] HttpConfiguration httpConfiguration
         )
         {
             ResolvedDependencies = new Dictionary<Type, object>();
@@ -23,10 +25,13 @@ namespace Intersect.Server.Web.RestApi.Services
             HttpConfiguration = httpConfiguration;
         }
 
+        [NotNull]
         private Dictionary<Type, object> ResolvedDependencies { get; }
 
+        [NotNull]
         public HttpConfiguration HttpConfiguration { get; }
 
+        [NotNull]
         public ApiConfiguration ApiConfiguration { get; }
 
         /// <inheritdoc />
@@ -36,7 +41,7 @@ namespace Intersect.Server.Web.RestApi.Services
         }
 
         /// <inheritdoc />
-        public object GetService(Type serviceType)
+        public object GetService([NotNull] Type serviceType)
         {
             if (ResolvedDependencies.TryGetValue(serviceType, out var foundService))
             {
@@ -63,7 +68,7 @@ namespace Intersect.Server.Web.RestApi.Services
         }
 
         /// <inheritdoc />
-        public IEnumerable<object> GetServices(Type serviceType)
+        public IEnumerable<object> GetServices([NotNull] Type serviceType)
         {
             return new[] {GetService(serviceType)};
         }

@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Logging.Output
 {
 
@@ -40,11 +42,11 @@ namespace Intersect.Logging.Output
         }
 
         protected void InternalWrite(
-            LogConfiguration configuration,
+            [NotNull] LogConfiguration configuration,
             LogLevel logLevel,
-            Exception exception,
-            string format,
-            params object[] args
+            [CanBeNull] Exception exception,
+            [CanBeNull] string format,
+            [CanBeNull] params object[] args
         )
         {
             if (LogLevel < logLevel)

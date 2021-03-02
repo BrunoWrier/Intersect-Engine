@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Windows.Forms;
 
-using Intersect.Core;
 using Intersect.Editor.Content;
 using Intersect.Editor.General;
 using Intersect.Editor.Maps;
@@ -18,32 +16,9 @@ using Intersect.Network.Packets.Server;
 
 namespace Intersect.Editor.Networking
 {
-    internal sealed class PacketHandler
+
+    public static class PacketHandler
     {
-        private sealed class VirtualPacketSender : IPacketSender
-        {
-            public IApplicationContext ApplicationContext { get; }
-
-            public VirtualPacketSender(IApplicationContext applicationContext) =>
-                ApplicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
-
-            #region Implementation of IPacketSender
-
-            /// <inheritdoc />
-            public bool Send(IPacket packet)
-            {
-                if (packet is IntersectPacket intersectPacket)
-                {
-                    Network.SendPacket(intersectPacket);
-
-                    return true;
-                }
-
-                return false;
-            }
-
-            #endregion
-        }
 
         public delegate void GameObjectUpdated(GameObjectType type);
 
@@ -53,80 +28,18 @@ namespace Intersect.Editor.Networking
 
         public static MapUpdated MapUpdatedDelegate;
 
-        public IApplicationContext Context { get; }
-
-        public Logger Logger { get; }
-
-        public PacketHandlerRegistry Registry { get; }
-
-        public IPacketSender VirtualSender { get; }
-
-        public PacketHandler(IApplicationContext context, PacketHandlerRegistry packetHandlerRegistry)
+        public static bool HandlePacket(IConnection connection, IPacket packet)
         {
-            Context = context ?? throw new ArgumentNullException(nameof(context));
-            Registry = packetHandlerRegistry ?? throw new ArgumentNullException(nameof(packetHandlerRegistry));
-
-            if (!Registry.TryRegisterAvailableMethodHandlers(GetType(), this, false) || Registry.IsEmpty)
+            if (packet is CerasPacket)
             {
-                throw new InvalidOperationException("Failed to register method handlers, see logs for more details.");
-            }
-
-            VirtualSender = new VirtualPacketSender(context);
-        }
-
-        public bool HandlePacket(IConnection connection, IPacket packet)
-        {
-            if (!(packet is IntersectPacket))
-            {
-                return false;
-            }
-
-            if (!Registry.TryGetHandler(packet, out HandlePacketGeneric handler))
-            {
-                Logger.Error($"No registered handler for {packet.GetType().FullName}!");
-
-                return false;
-            }
-
-            if (Registry.TryGetPreprocessors(packet, out var preprocessors))
-            {
-                if (!preprocessors.All(preprocessor => preprocessor.Handle(VirtualSender, packet)))
-                {
-                    // Preprocessors are intended to be silent filter functions
-                    return false;
-                }
-            }
-
-            if (Registry.TryGetPreHooks(packet, out var preHooks))
-            {
-                if (!preHooks.All(hook => hook.Handle(VirtualSender, packet)))
-                {
-                    // Hooks should not fail, if they do that's an error
-                    Logger.Error($"PreHook handler failed for {packet.GetType().FullName}.");
-                    return false;
-                }
-            }
-
-            if (!handler(VirtualSender, packet))
-            {
-                return false;
-            }
-
-            if (Registry.TryGetPostHooks(packet, out var postHooks))
-            {
-                if (!postHooks.All(hook => hook.Handle(VirtualSender, packet)))
-                {
-                    // Hooks should not fail, if they do that's an error
-                    Logger.Error($"PostHook handler failed for {packet.GetType().FullName}.");
-                    return false;
-                }
+                HandlePacket((dynamic) packet);
             }
 
             return true;
         }
 
         //PingPacket
-        public void HandlePacket(IPacketSender packetSender, PingPacket packet)
+        private static void HandlePacket(PingPacket packet)
         {
             if (packet.RequestingReply)
             {
@@ -135,20 +48,20 @@ namespace Intersect.Editor.Networking
         }
 
         //ConfigPacket
-        public void HandlePacket(IPacketSender packetSender, ConfigPacket packet)
+        private static void HandlePacket(ConfigPacket packet)
         {
             Options.LoadFromServer(packet.Config);
         }
 
         //JoinGamePacket
-        public void HandlePacket(IPacketSender packetSender, JoinGamePacket packet)
+        private static void HandlePacket(JoinGamePacket packet)
         {
             Globals.LoginForm.TryRemembering();
             Globals.LoginForm.HideSafe();
         }
 
         //MapPacket
-        public void HandlePacket(IPacketSender packetSender, MapPacket packet)
+        private static void HandlePacket(MapPacket packet)
         {
             if (packet.Deleted)
             {
@@ -284,11 +197,11 @@ namespace Intersect.Editor.Networking
         }
 
         //GameDataPacket
-        public void HandlePacket(IPacketSender packetSender, GameDataPacket packet)
+        private static void HandlePacket(GameDataPacket packet)
         {
             foreach (var obj in packet.GameObjects)
             {
-                HandlePacket(packetSender, obj);
+                HandlePacket((dynamic) obj);
             }
 
             Globals.HasGameData = true;
@@ -301,13 +214,13 @@ namespace Intersect.Editor.Networking
         }
 
         //EnterMapPacket
-        public void HandlePacket(IPacketSender packetSender, EnterMapPacket packet)
+        private static void HandlePacket(EnterMapPacket packet)
         {
             Globals.MainForm.BeginInvoke((Action) (() => Globals.MainForm.EnterMap(packet.MapId)));
         }
 
         //MapListPacket
-        public void HandlePacket(IPacketSender packetSender, MapListPacket packet)
+        private static void HandlePacket(MapListPacket packet)
         {
             MapList.List.JsonData = packet.MapListData;
             MapList.List.PostLoad(MapBase.Lookup, false, true);
@@ -321,13 +234,13 @@ namespace Intersect.Editor.Networking
         }
 
         //ErrorMessagePacket
-        public void HandlePacket(IPacketSender packetSender, ErrorMessagePacket packet)
+        private static void HandlePacket(ErrorMessagePacket packet)
         {
             MessageBox.Show(packet.Error, packet.Header, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         //MapGridPacket
-        public void HandlePacket(IPacketSender packetSender, MapGridPacket packet)
+        private static void HandlePacket(MapGridPacket packet)
         {
             if (Globals.MapGrid != null)
             {
@@ -353,7 +266,7 @@ namespace Intersect.Editor.Networking
         }
 
         //GameObjectPacket
-        public void HandlePacket(IPacketSender packetSender, GameObjectPacket packet)
+        private static void HandlePacket(GameObjectPacket packet)
         {
             var id = packet.Id;
             var deleted = packet.Deleted;
@@ -395,7 +308,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Class:
                     if (deleted)
                     {
@@ -410,7 +322,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Item:
                     if (deleted)
                     {
@@ -439,7 +350,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Projectile:
                     if (deleted)
                     {
@@ -454,7 +364,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Quest:
                     if (deleted)
                     {
@@ -474,7 +383,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Resource:
                     if (deleted)
                     {
@@ -489,7 +397,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Shop:
                     if (deleted)
                     {
@@ -504,7 +411,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Spell:
                     if (deleted)
                     {
@@ -519,7 +425,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.CraftTables:
                     if (deleted)
                     {
@@ -534,7 +439,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Crafts:
                     if (deleted)
                     {
@@ -549,11 +453,9 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Map:
                     //Handled in a different packet
                     break;
-
                 case GameObjectType.Event:
                     var wasCommon = false;
                     if (deleted)
@@ -576,7 +478,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.PlayerVariable:
                     if (deleted)
                     {
@@ -591,7 +492,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.ServerVariable:
                     if (deleted)
                     {
@@ -606,7 +506,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 case GameObjectType.Tileset:
                     var obj = new TilesetBase(id);
                     obj.Load(json);
@@ -617,7 +516,6 @@ namespace Intersect.Editor.Networking
                     }
 
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -626,15 +524,17 @@ namespace Intersect.Editor.Networking
         }
 
         //OpenEditorPacket
-        public void HandlePacket(IPacketSender packetSender, OpenEditorPacket packet)
+        private static void HandlePacket(OpenEditorPacket packet)
         {
             Globals.MainForm.BeginInvoke(Globals.MainForm.EditorDelegate, packet.Type);
         }
 
         //TimeDataPacket
-        public void HandlePacket(IPacketSender packetSender, TimeDataPacket packet)
+        private static void HandlePacket(TimeDataPacket packet)
         {
             TimeBase.GetTimeBase().LoadFromJson(packet.TimeJson);
         }
+
     }
+
 }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Security.Cryptography;
-using Intersect.Network.Packets;
+
+using Ceras;
+
 using Intersect.Utilities;
 
-using MessagePack;
+using JetBrains.Annotations;
 
 #if INTERSECT_DIAGNOSTIC
 using Intersect.Logging;
@@ -11,26 +13,15 @@ using Intersect.Logging;
 
 namespace Intersect.Network
 {
-    [MessagePackObject]
-    [Union(0, typeof(ApprovalPacket))]
-    [Union(1, typeof(HailPacket))]
-    public abstract class ConnectionPacket : IntersectPacket
+    public abstract class ConnectionPacket : CerasPacket
     {
         protected const int SIZE_HANDSHAKE_SECRET = 32;
 
-        [IgnoreMember]
         protected RSACryptoServiceProvider mRsa;
-
-        [IgnoreMember]
         protected byte[] mHandshakeSecret;
 
-        [IgnoreMember]
         protected long mAdjusted;
-
-        [IgnoreMember]
         protected long mUTC;
-
-        [IgnoreMember]
         protected long mOffset;
 
         protected ConnectionPacket()
@@ -48,40 +39,40 @@ namespace Intersect.Network
             UTC = Timing.Global.TicksUTC;
         }
 
-        [IgnoreMember]
+        [Exclude]
         public byte[] HandshakeSecret
         {
             get => mHandshakeSecret;
             set => mHandshakeSecret = value;
         }
 
-        [IgnoreMember]
+        [Exclude]
         public long Adjusted
         {
             get => mAdjusted;
             set => mAdjusted = value;
         }
 
-        [IgnoreMember]
+        [Exclude]
         public long UTC
         {
             get => mUTC;
             set => mUTC = value;
         }
 
-        [IgnoreMember]
+        [Exclude]
         public long Offset
         {
             get => mOffset;
             set => mOffset = value;
         }
 
-        [Key(0)]
-        public byte[] EncryptedData { get; set; }
+        [Include, NotNull]
+        protected byte[] EncryptedData { get; set; }
 
         public abstract bool Encrypt();
 
-        public abstract bool Decrypt(RSACryptoServiceProvider rsa);
+        public abstract bool Decrypt([NotNull] RSACryptoServiceProvider rsa);
 
         protected static void DumpKey(RSAParameters parameters, bool isPublic)
         {

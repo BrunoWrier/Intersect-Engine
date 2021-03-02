@@ -3,27 +3,29 @@ using System.Collections.Generic;
 
 using Intersect.Server.Database;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Entities
 {
 
     public struct Trading : IDisposable
     {
 
-        private readonly Player mPlayer;
+        [NotNull] private readonly Player mPlayer;
 
         public bool Actively => Counterparty != null;
 
-        public Player Counterparty;
+        [CanBeNull] public Player Counterparty;
 
         public bool Accepted;
 
-        public Item[] Offer;
+        [NotNull] public Item[] Offer;
 
         public Player Requester;
 
-        public Dictionary<Player, long> Requests;
+        [NotNull] public Dictionary<Player, long> Requests;
 
-        public Trading(Player player)
+        public Trading([NotNull] Player player)
         {
             mPlayer = player;
 
@@ -36,7 +38,7 @@ namespace Intersect.Server.Entities
 
         public void Dispose()
         {
-            Offer = Array.Empty<Item>();
+            Offer = new Item[0];
             Requester = null;
             Requests.Clear();
         }

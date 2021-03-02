@@ -46,7 +46,7 @@ namespace Intersect.Editor.General
 
         public static int CurrentEditor = -1;
 
-        public static string CurrentLayer = string.Empty;
+        public static int CurrentLayer = 0;
 
         //Editor Variables
         public static MapInstance CurrentMap = null;

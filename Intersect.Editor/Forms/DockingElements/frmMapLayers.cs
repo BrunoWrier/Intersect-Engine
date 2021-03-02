@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using Intersect.Config;
+
 using Intersect.Editor.Content;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
@@ -12,8 +12,9 @@ using Intersect.Enums;
 using Intersect.GameObjects;
 using Intersect.GameObjects.Maps;
 using Intersect.GameObjects.Maps.MapList;
-using Intersect.Localization;
 using Intersect.Utilities;
+
+using JetBrains.Annotations;
 
 using Microsoft.Xna.Framework.Graphics;
 
@@ -42,12 +43,12 @@ namespace Intersect.Editor.Forms.DockingElements
 
         public LayerTabs CurrentTab = LayerTabs.Tiles;
 
-        public Dictionary<string, bool> LayerVisibility = new Dictionary<string,bool>();
+        public List<bool> LayerVisibility = new List<bool>();
 
         //MonoGame Swap Chain
         private SwapChainRenderTarget mChain;
 
-        private string mLastTileLayer;
+        private int mLastTileLayer;
 
         private List<PictureBox> mMapLayers = new List<PictureBox>();
 
@@ -56,60 +57,28 @@ namespace Intersect.Editor.Forms.DockingElements
         public FrmMapLayers()
         {
             InitializeComponent();
-            mMapLayers.Add(picLayer1);
-            mMapLayers.Add(picLayer2);
-            mMapLayers.Add(picLayer3);
-            mMapLayers.Add(picLayer4);
-            mMapLayers.Add(picLayer5);
+            mMapLayers.Add(picGround);
+            LayerVisibility.Add(true);
+            mMapLayers.Add(picMask);
+            LayerVisibility.Add(true);
+            mMapLayers.Add(picMask2);
+            LayerVisibility.Add(true);
+            mMapLayers.Add(picFringe);
+            LayerVisibility.Add(true);
+            mMapLayers.Add(picFringe2);
+            LayerVisibility.Add(true);
         }
 
         public void Init()
         {
             cmbAutotile.SelectedIndex = 0;
-
-            //See if we can use the old style icons instead of a combobox
-            if (Options.Instance.MapOpts.Layers.All.Count <= mMapLayers.Count)
-            {
-                //Hide combobox...
-                cmbMapLayer.Hide();
-                for (int i = 0; i < mMapLayers.Count; i++)
-                {
-                    if (i < Options.Instance.MapOpts.Layers.All.Count)
-                    {
-                        Strings.Tiles.maplayers.TryGetValue(Options.Instance.MapOpts.Layers.All[i].ToLower(), out LocalizedString layerName);
-                        if (layerName == null) layerName = Options.Instance.MapOpts.Layers.All[i];
-                        mMapLayers[i].Text = layerName;
-                        mMapLayers[i].Show();
-                    }
-                    else
-                    {
-                        mMapLayers[i].Hide();
-                    }
-                }
-            }
-            else
-            {
-                foreach(var layer in mMapLayers)
-                {
-                    layer.Hide();
-                }
-                //Show Combobox
-                cmbMapLayer.Show();
-                cmbMapLayer.Items.AddRange(Options.Instance.MapOpts.Layers.All.ToArray());
-                cmbMapLayer.SelectedIndex = 0;
-            }
-
-            foreach (var layer in Options.Instance.MapOpts.Layers.All)
-            {
-                LayerVisibility.Add(layer, true);
-            }
-
-            SetLayer(Options.Instance.MapOpts.Layers.All[0]);
+            SetLayer(0);
             if (cmbTilesets.Items.Count > 0)
             {
                 SetTileset(cmbTilesets.Items[0].ToString());
             }
 
+            grpZDimension.Visible = Options.ZDimensionVisible;
             rbZDimension.Visible = Options.ZDimensionVisible;
             grpZResource.Visible = Options.ZDimensionVisible;
         }
@@ -334,102 +303,48 @@ namespace Intersect.Editor.Forms.DockingElements
             }
         }
 
-        public void SetLayer(string name)
+        public void SetLayer(int index)
         {
-            Globals.CurrentLayer = name;
-
-            var index = Options.Instance.MapOpts.Layers.All.IndexOf(name);
-
-            if (!cmbMapLayer.Visible)
+            Globals.CurrentLayer = index;
+            if (index < Options.LayerCount)
             {
                 for (var i = 0; i < mMapLayers.Count; i++)
                 {
-                    if (mMapLayers[i].BackgroundImage != null)
+                    if (i == index)
                     {
-                        mMapLayers[i].BackgroundImage.Dispose();
-                        mMapLayers[i].BackgroundImage = null;
+                        if (!LayerVisibility[i])
+                        {
+                            mMapLayers[i].BackgroundImage =
+                                (Bitmap) Properties.Resources.ResourceManager.GetObject("_" + (i + 1) + "_A_Hide");
+                        }
+                        else
+                        {
+                            mMapLayers[i].BackgroundImage =
+                                (Bitmap) Properties.Resources.ResourceManager.GetObject("_" + (i + 1) + "_A");
+                        }
                     }
-                    mMapLayers[i].BackgroundImage = DrawLayerImage(i, i == index, !LayerVisibility[Options.Instance.MapOpts.Layers.All[i]]);
+                    else
+                    {
+                        if (!LayerVisibility[i])
+                        {
+                            mMapLayers[i].BackgroundImage =
+                                (Bitmap) Properties.Resources.ResourceManager.GetObject("_" + (i + 1) + "_B_Hide");
+                        }
+                        else
+                        {
+                            mMapLayers[i].BackgroundImage =
+                                (Bitmap) Properties.Resources.ResourceManager.GetObject("_" + (i + 1) + "_B");
+                        }
+                    }
                 }
+
+                mLastTileLayer = index;
             }
             else
             {
-                if (cmbMapLayer.Items.IndexOf(name) > -1)
-                {
-                    cmbMapLayer.SelectedIndex = cmbMapLayer.Items.IndexOf(name);
-                }
             }
-
-            mLastTileLayer = name;
 
             Core.Graphics.TilePreviewUpdated = true;
-        }
-
-        private Bitmap DrawLayerImage(int layerIndex, bool selected, bool hidden)
-        {
-            var img = new Bitmap(32, 32);
-            img.MakeTransparent(img.GetPixel(0, 0));
-
-            var g = Graphics.FromImage(img);
-
-            var layer = (Bitmap)Properties.Resources.ResourceManager.GetObject("layer");
-            var layerSel = (Bitmap)Properties.Resources.ResourceManager.GetObject("layer_sel");
-            var face = (Bitmap)Properties.Resources.ResourceManager.GetObject("layer_face");
-            var faceSel = (Bitmap)Properties.Resources.ResourceManager.GetObject("layer_face_sel");
-            var hiddenIcon = (Bitmap)Properties.Resources.ResourceManager.GetObject("layer_hidden");
-            var drawFace = selected ? faceSel : face;
-
-            var drawIndex = 0;
-
-            //Draw Lower & Middle Layers
-            foreach (var l in Options.Instance.MapOpts.Layers.LowerLayers)
-            {
-                var drawImg = layer;
-                if (drawIndex == layerIndex)
-                {
-                    drawImg = layerSel;
-                }
-                g.DrawImage(drawImg, new PointF(3, 23 - ((drawIndex) * (layer.Height - 4))));
-                drawIndex++;
-            }
-
-
-            //If this image for is an upper layer, render the face below the next layers
-            if (!Options.Instance.MapOpts.Layers.LowerLayers.Contains(Options.Instance.MapOpts.Layers.All[layerIndex]))
-            {
-                g.DrawImage(drawFace, new PointF(13, 13));
-            }
-
-
-            //Draw Upper Layers
-            var middleUpperLayers = Options.Instance.MapOpts.Layers.LowerLayers.ToList();
-            middleUpperLayers.AddRange(Options.Instance.MapOpts.Layers.MiddleLayers);
-            foreach (var l in middleUpperLayers)
-            {
-                var drawImg = layer;
-                if (drawIndex == layerIndex)
-                {
-                    drawImg = layerSel;
-                }
-                g.DrawImage(drawImg, new PointF(3, 23 - ((drawIndex) * (layer.Height - 4))));
-                drawIndex++;
-            }
-
-            //If this image for is a lower layer, render the face above everything
-            if (Options.Instance.MapOpts.Layers.LowerLayers.Contains(Options.Instance.MapOpts.Layers.All[layerIndex]))
-            {
-                g.DrawImage(drawFace, new PointF(13, 13));
-            }
-
-
-            //Draw Hidden Icon
-            if (hidden)
-            {
-                g.DrawImage(hiddenIcon, new PointF(32 - hiddenIcon.Width, 0));
-            }
-
-            g.Dispose();
-            return img;
         }
 
         //Mapping Attribute Functions
@@ -658,6 +573,7 @@ namespace Intersect.Editor.Forms.DockingElements
         }
 
         [Obsolete("The entire switch statement should be implemented as a parameterized CreateAttribute().")]
+        [NotNull]
         public MapAttribute CreateAttribute()
         {
             var attributeType = SelectedMapAttributeType;
@@ -694,7 +610,6 @@ namespace Intersect.Editor.Forms.DockingElements
                     var soundAttribute = attribute as MapSoundAttribute;
                     soundAttribute.Distance = (byte)nudSoundDistance.Value;
                     soundAttribute.File = TextUtils.SanitizeNone(cmbMapAttributeSound.Text);
-                    soundAttribute.LoopInterval = (int)nudSoundLoopInterval.Value;
                     break;
 
                 case MapAttributes.Resource:
@@ -1051,6 +966,11 @@ namespace Intersect.Editor.Forms.DockingElements
 
             lblEventInstructions.Text = Strings.MapLayers.eventinstructions;
             lblLightInstructions.Text = Strings.MapLayers.lightinstructions;
+
+            for (var i = 0; i < mMapLayers.Count; i++)
+            {
+                mMapLayers[i].Text = Strings.Tiles.layers[i];
+            }
         }
 
         public void InitMapLayers()
@@ -1136,7 +1056,7 @@ namespace Intersect.Editor.Forms.DockingElements
         {
             Globals.CurrentTool = Globals.SavedTool;
             ChangeTab();
-            Globals.CurrentLayer = LayerOptions.Attributes;
+            Globals.CurrentLayer = Options.LayerCount;
             Core.Graphics.TilePreviewUpdated = true;
             btnAttributeHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
             CurrentTab = LayerTabs.Attributes;
@@ -1145,13 +1065,13 @@ namespace Intersect.Editor.Forms.DockingElements
 
         public void btnLightsHeader_Click(object sender, EventArgs e)
         {
-            if (Globals.CurrentLayer != LayerOptions.Lights && Globals.CurrentLayer != LayerOptions.Events && Globals.CurrentLayer != LayerOptions.Npcs)
+            if (Globals.CurrentLayer < Options.LayerCount + 1)
             {
                 Globals.SavedTool = Globals.CurrentTool;
             }
 
             ChangeTab();
-            Globals.CurrentLayer = LayerOptions.Lights;
+            Globals.CurrentLayer = Options.LayerCount + 1;
             Core.Graphics.TilePreviewUpdated = true;
             btnLightsHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
             CurrentTab = LayerTabs.Lights;
@@ -1160,13 +1080,13 @@ namespace Intersect.Editor.Forms.DockingElements
 
         private void btnEventsHeader_Click(object sender, EventArgs e)
         {
-            if (Globals.CurrentLayer != LayerOptions.Lights && Globals.CurrentLayer != LayerOptions.Events && Globals.CurrentLayer != LayerOptions.Npcs)
+            if (Globals.CurrentLayer < Options.LayerCount + 1)
             {
                 Globals.SavedTool = Globals.CurrentTool;
             }
 
             ChangeTab();
-            Globals.CurrentLayer = LayerOptions.Events;
+            Globals.CurrentLayer = Options.LayerCount + 2;
             Core.Graphics.TilePreviewUpdated = true;
             btnEventsHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
             CurrentTab = LayerTabs.Events;
@@ -1175,13 +1095,13 @@ namespace Intersect.Editor.Forms.DockingElements
 
         private void btnNpcsHeader_Click(object sender, EventArgs e)
         {
-            if (Globals.CurrentLayer != LayerOptions.Lights && Globals.CurrentLayer != LayerOptions.Events && Globals.CurrentLayer != LayerOptions.Npcs)
+            if (Globals.CurrentLayer < Options.LayerCount + 1)
             {
                 Globals.SavedTool = Globals.CurrentTool;
             }
 
             ChangeTab();
-            Globals.CurrentLayer = LayerOptions.Npcs;
+            Globals.CurrentLayer = Options.LayerCount + 3;
             Core.Graphics.TilePreviewUpdated = true;
             RefreshNpcList();
             btnNpcsHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
@@ -1193,11 +1113,7 @@ namespace Intersect.Editor.Forms.DockingElements
         {
             if (e.Button == MouseButtons.Left)
             {
-                var index = mMapLayers.IndexOf((PictureBox)sender);
-                if (index > -1 && index < Options.Instance.MapOpts.Layers.All.Count)
-                {
-                    SetLayer(Options.Instance.MapOpts.Layers.All[index]);
-                }
+                SetLayer(mMapLayers.IndexOf((PictureBox) sender));
             }
             else
             {
@@ -1207,18 +1123,14 @@ namespace Intersect.Editor.Forms.DockingElements
 
         private void ToggleLayerVisibility(int index)
         {
-            if (index > -1 && index < Options.Instance.MapOpts.Layers.All.Count)
-            {
-                LayerVisibility[Options.Instance.MapOpts.Layers.All[index]] = !LayerVisibility[Options.Instance.MapOpts.Layers.All[index]];
-                SetLayer(Globals.CurrentLayer);
-            }
-            
+            LayerVisibility[index] = !LayerVisibility[index];
+            SetLayer(Globals.CurrentLayer);
         }
 
         private void picMapLayer_MouseHover(object sender, EventArgs e)
         {
             var tt = new ToolTip();
-            tt.SetToolTip((PictureBox) sender, Options.Instance.MapOpts.Layers.All[mMapLayers.IndexOf((PictureBox)sender)]);
+            tt.SetToolTip((PictureBox) sender, Strings.Tiles.layers[mMapLayers.IndexOf((PictureBox) sender)]);
         }
 
         private void cmbTilesets_MouseDown(object sender, MouseEventArgs e)
@@ -1234,13 +1146,6 @@ namespace Intersect.Editor.Forms.DockingElements
             nudItemQuantity.Value = Math.Max(1, nudItemQuantity.Value);
         }
 
-        private void cmbMapLayer_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (cmbMapLayer.SelectedIndex > -1)
-            {
-                SetLayer(Options.Instance.MapOpts.Layers.All[cmbMapLayer.SelectedIndex]);
-            }
-        }
     }
 
 }

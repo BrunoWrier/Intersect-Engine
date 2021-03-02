@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Immutability
 {
 
@@ -31,7 +33,7 @@ namespace Intersect.Immutability
             mValue = value;
         }
 
-        public static implicit operator TValue(Immutable<TValue> immutable)
+        public static implicit operator TValue([NotNull] Immutable<TValue> immutable)
         {
             return immutable.mValue;
         }

@@ -3,6 +3,8 @@ using System.IO;
 
 using Intersect.Config;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect
@@ -29,12 +31,6 @@ namespace Intersect
         [JsonProperty("OpenPortChecker", Order = 0)]
         protected bool _portChecker = true;
 
-        [JsonProperty("MaxClientConnections")]
-        protected int _maxConnections = 100;
-
-        [JsonProperty("MaximumLoggedinUsers")]
-        protected int _maxUsers = 50;
-
         [JsonProperty("UPnP", Order = -1)] protected bool _upnp = true;
 
         [JsonProperty("Chat")] public ChatOptions ChatOpts = new ChatOptions();
@@ -60,14 +56,13 @@ namespace Intersect
 
         [JsonProperty("Loot")] public LootOptions LootOpts = new LootOptions();
 
-        public ProcessingOptions Processing = new ProcessingOptions();
-
         public SpriteOptions Sprites = new SpriteOptions();
 
         [JsonProperty("Npc")] public NpcOptions NpcOpts = new NpcOptions();
 
         public SmtpSettings SmtpSettings = new SmtpSettings();
 
+        [NotNull]
         public static Options Instance { get; private set; }
 
         [JsonIgnore]
@@ -75,16 +70,6 @@ namespace Intersect
 
         //Public Getters
         public static ushort ServerPort { get => Instance._serverPort; set => Instance._serverPort = value; }
-
-        /// <summary>
-        /// Defines the maximum amount of network connections our server is allowed to handle.
-        /// </summary>
-        public static int MaxConnections => Instance._maxConnections;
-
-        /// <summary>
-        /// Defines the maximum amount of logged in users our server is allowed to handle.
-        /// </summary>
-        public static int MaxLoggedinUsers => Instance._maxUsers;
 
         public static int MaxStatValue => Instance.PlayerOpts.MaxStat;
 
@@ -152,8 +137,6 @@ namespace Intersect
 
         public static PartyOptions Party => Instance.PartyOpts;
 
-        public static ChatOptions Chat => Instance.ChatOpts;
-
         public static bool UPnP => Instance._upnp;
 
         public static bool OpenPortChecker => Instance._portChecker;
@@ -182,12 +165,16 @@ namespace Intersect
             set => Instance.GameDatabase = value;
         }
 
+        [NotNull]
         public static PlayerOptions Player => Instance.PlayerOpts;
 
+        [NotNull]
         public static EquipmentOptions Equipment => Instance.EquipmentOpts;
 
+        [NotNull]
         public static CombatOptions Combat => Instance.CombatOpts;
 
+        [NotNull]
         public static MapOptions Map => Instance.MapOpts;
 
         public static bool Loaded => Instance != null;
@@ -201,6 +188,7 @@ namespace Intersect
         /// <summary>
         /// Passability configuration by map zone
         /// </summary>
+        [NotNull]
         public Passability Passability { get; } = new Passability();
 
         public bool SmtpValid { get; set; }
@@ -285,6 +273,9 @@ namespace Intersect
 
         // TODO: Clean these up
         //Values that cannot easily be changed:
+        public const int LayerCount = 5;
+
+        public const int MaxStats = 5;
 
         public const int MaxHotbar = 10;
 

@@ -3,12 +3,15 @@ using Intersect.Extensions;
 using Intersect.Localization;
 using Intersect.Server.Core.CommandParsing.Arguments;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.CommandParsing.Commands
 {
 
     public interface IHelpableCommand : ICommand
     {
 
+        [NotNull]
         HelpArgument Help { get; }
 
     }
@@ -17,7 +20,7 @@ namespace Intersect.Server.Core.CommandParsing.Commands
         where TContext : IApplicationContext
     {
 
-        protected HelpableCommand(LocaleCommand localization, params ICommandArgument[] arguments) :
+        protected HelpableCommand([NotNull] LocaleCommand localization, [NotNull] params ICommandArgument[] arguments) :
             base(localization, arguments.Prepend(new HelpArgument()))
         {
         }
@@ -49,7 +52,7 @@ namespace Intersect.Server.Core.CommandParsing.Commands
             HandleValue(context, result);
         }
 
-        protected abstract void HandleValue(TContext context, ParserResult result);
+        protected abstract void HandleValue([NotNull] TContext context, [NotNull] ParserResult result);
 
     }
 

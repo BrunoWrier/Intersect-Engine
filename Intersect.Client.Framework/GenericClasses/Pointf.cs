@@ -5,11 +5,6 @@ namespace Intersect.Client.Framework.GenericClasses
 
     public struct Pointf
     {
-        public static Pointf Empty => new Pointf();
-
-        public static Pointf UnitX => new Pointf(1, 0);
-
-        public static Pointf UnitY => new Pointf(0, 1);
 
         private const float TOLERANCE = 0.001f;
 
@@ -25,9 +20,9 @@ namespace Intersect.Client.Framework.GenericClasses
 
         public override bool Equals(object obj)
         {
-            if (obj is Pointf point)
+            if (obj is Pointf)
             {
-                return point == this;
+                return (Pointf) obj == this;
             }
 
             return false;
@@ -38,11 +33,12 @@ namespace Intersect.Client.Framework.GenericClasses
             return Math.Abs(X - other.X) < TOLERANCE && Math.Abs(Y - other.Y) < TOLERANCE;
         }
 
-        public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode();
+        public override int GetHashCode()
+        {
+            return X.GetHashCode() ^ Y.GetHashCode();
+        }
 
-        public Pointf StripX() => new Pointf(0, Y);
-
-        public Pointf StripY() => new Pointf(X, 0);
+        public static Pointf Empty => new Pointf();
 
         public static bool operator !=(Pointf left, Pointf right)
         {
@@ -54,13 +50,6 @@ namespace Intersect.Client.Framework.GenericClasses
             return Math.Abs(left.X - right.X) < TOLERANCE && Math.Abs(left.Y - right.Y) < TOLERANCE;
         }
 
-        public static Pointf operator +(Pointf left, Pointf right) => new Pointf(left.X + right.X, left.Y + right.Y);
-
-        public static Pointf operator -(Pointf left, Pointf right) => new Pointf(left.X - right.X, left.Y - right.Y);
-
-        public static Pointf operator *(Pointf point, float scalar) => new Pointf(point.X * scalar, point.Y * scalar);
-
-        public static Pointf operator /(Pointf point, float scalar) => new Pointf(point.X / scalar, point.Y / scalar);
     }
 
 }

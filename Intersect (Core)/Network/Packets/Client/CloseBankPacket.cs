@@ -1,9 +1,7 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Client
+﻿namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class CloseBankPacket : IntersectPacket
+
+    public class CloseBankPacket : CerasPacket
     {
 
     }

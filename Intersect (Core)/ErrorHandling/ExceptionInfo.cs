@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -26,7 +28,7 @@ namespace Intersect.ErrorHandling
 
         public string Type { get; }
 
-        public ExceptionInfo(Exception exception)
+        public ExceptionInfo([NotNull] Exception exception)
         {
             DataKeys = exception.Data.Count;
             MessageLength = exception.Message?.Length ?? -1;
@@ -38,6 +40,7 @@ namespace Intersect.ErrorHandling
             Type = exception.GetType().FullName;
         }
 
+        [NotNull]
         public static implicit operator JObject(ExceptionInfo exceptionInfo)
         {
             return new JObject
@@ -53,6 +56,7 @@ namespace Intersect.ErrorHandling
             };
         }
 
+        [NotNull]
         public static implicit operator string(ExceptionInfo exceptionInfo)
         {
             return exceptionInfo.ToString();

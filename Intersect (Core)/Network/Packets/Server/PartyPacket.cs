@@ -1,21 +1,14 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class PartyPacket : IntersectPacket
+
+    public class PartyPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public PartyPacket()
-        {
-        }
 
         public PartyPacket(PartyMemberPacket[] memberData)
         {
             MemberData = memberData;
         }
 
-        [Key(0)]
         public PartyMemberPacket[] MemberData { get; set; }
 
     }

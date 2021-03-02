@@ -113,14 +113,7 @@ namespace Intersect.Client.Interface.Game
         {
             if (mSearchTextbox.Text.Trim().Length >= 3) //Don't bother sending a packet less than the char limit
             {
-                if (Globals.Me.CombatTimer < Globals.System.GetTimeMs())
-                {
-                    PacketSender.SendAddFriend(mSearchTextbox.Text);
-                }
-                else
-                {
-                    PacketSender.SendChatMsg(Strings.Friends.infight.ToString(), 4);
-                }
+                PacketSender.SendAddFriend(mSearchTextbox.Text);
             }
         }
 
@@ -170,14 +163,7 @@ namespace Intersect.Client.Interface.Game
             var ibox = (InputBox) sender;
             if (ibox.TextValue.Trim().Length >= 3) //Don't bother sending a packet less than the char limit
             {
-                if (Globals.Me.CombatTimer < Globals.System.GetTimeMs())
-                {
-                    PacketSender.SendAddFriend(ibox.TextValue);
-                }
-                else
-                {
-                    PacketSender.SendChatMsg(Strings.Friends.infight.ToString(), 4);
-                }
+                PacketSender.SendAddFriend(ibox.TextValue);
             }
         }
 

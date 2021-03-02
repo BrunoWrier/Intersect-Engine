@@ -6,6 +6,8 @@ using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Localization;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.Commands
 {
 
@@ -19,6 +21,7 @@ namespace Intersect.Server.Core.Commands
         {
         }
 
+        [NotNull]
         private VariableArgument<bool> Access => FindArgumentOrThrow<VariableArgument<bool>>();
 
         protected override void HandleTarget(ServerContext context, ParserResult result, User target)
@@ -42,7 +45,7 @@ namespace Intersect.Server.Core.Commands
                 target.Power.ApiRoles = new Database.PlayerData.Security.ApiRoles();
             }
 
-            target.Save();
+            DbInterface.SavePlayerDatabaseAsync();
 
             Console.WriteLine(
                 access

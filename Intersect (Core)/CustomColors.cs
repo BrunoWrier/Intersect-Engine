@@ -5,6 +5,8 @@ using System.Text;
 
 using Intersect.Logging;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect
@@ -13,13 +15,13 @@ namespace Intersect
     public class ColorConverter : JsonConverter<Color>
     {
 
-        public override void WriteJson(JsonWriter writer, Color value, JsonSerializer serializer)
+        public override void WriteJson([NotNull] JsonWriter writer, Color value, JsonSerializer serializer)
         {
             writer.WriteValue($"{value?.A ?? 0},{value?.R ?? 0},{value?.G ?? 0},{value?.B ?? 0}");
         }
 
         public override Color ReadJson(
-            JsonReader reader,
+            [NotNull] JsonReader reader,
             Type objectType,
             Color existingValue,
             bool hasExistingValue,
@@ -219,16 +221,6 @@ namespace Intersect
                 {5, Color.Yellow},
             };
 
-            public Dictionary<int, LabelColor> MapRarities = new Dictionary<int, LabelColor>() 
-            {
-                { 0, new LabelColor(Color.White, Color.Black, new Color(100, 0, 0, 0)) },
-                { 1, new LabelColor(Color.Gray, Color.Black, new Color(100, 0, 0, 0)) },
-                { 2, new LabelColor(Color.Red, Color.Black, new Color(100, 0, 0, 0)) },
-                { 3, new LabelColor(Color.Blue, Color.Black, new Color(100, 0, 0, 0)) },
-                { 4, new LabelColor(Color.Gray, Color.Black, new Color(100, 0, 0, 0)) },
-                { 5, new LabelColor(Color.Yellow, Color.Black, new Color(100, 0, 0, 0)) },
-            };
-
         }
 
         #region Serialization
@@ -285,23 +277,24 @@ namespace Intersect
             Root = new RootNamespace();
         }
 
+        [NotNull]
         private static RootNamespace Root { get; set; }
 
         // ReSharper disable MemberHidesStaticFromOuterClass
         private sealed class RootNamespace
         {
 
-            public readonly AlertsNamespace Alerts = new AlertsNamespace();
+            [NotNull] public readonly AlertsNamespace Alerts = new AlertsNamespace();
 
-            public readonly ChatNamespace Chat = new ChatNamespace();
+            [NotNull] public readonly ChatNamespace Chat = new ChatNamespace();
 
-            public readonly CombatNamespace Combat = new CombatNamespace();
+            [NotNull] public readonly CombatNamespace Combat = new CombatNamespace();
 
-            public readonly ItemsNamespace Items = new ItemsNamespace();
+            [NotNull] public readonly ItemsNamespace Items = new ItemsNamespace();
 
-            public readonly NamesNamespace Names = new NamesNamespace();
+            [NotNull] public readonly NamesNamespace Names = new NamesNamespace();
 
-            public readonly QuestsNamespace Quests = new QuestsNamespace();
+            [NotNull] public readonly QuestsNamespace Quests = new QuestsNamespace();
 
         }
 
@@ -311,16 +304,22 @@ namespace Intersect
 
         #region Namespace Exposure
 
+        [NotNull]
         public static NamesNamespace Names => Root.Names;
 
+        [NotNull]
         public static ChatNamespace Chat => Root.Chat;
 
+        [NotNull]
         public static QuestsNamespace Quests => Root.Quests;
 
+        [NotNull]
         public static AlertsNamespace Alerts => Root.Alerts;
 
+        [NotNull]
         public static CombatNamespace Combat => Root.Combat;
 
+        [NotNull]
         public static ItemsNamespace Items => Root.Items;
 
         #endregion

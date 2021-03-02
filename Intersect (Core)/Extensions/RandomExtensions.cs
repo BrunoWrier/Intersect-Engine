@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 using MathNet.Numerics.Random;
 
 namespace Intersect.Extensions
@@ -8,7 +10,7 @@ namespace Intersect.Extensions
     public static class RandomExtensions
     {
 
-        public static long NextLong(this Random random)
+        public static long NextLong([NotNull] this Random random)
         {
             var buffer = new byte[8];
             random.NextBytes(buffer);
@@ -16,7 +18,7 @@ namespace Intersect.Extensions
             return BitConverter.ToInt64(buffer, 0);
         }
 
-        public static long NextLong(this Random random, long maximum)
+        public static long NextLong([NotNull] this Random random, long maximum)
         {
             if (maximum <= 0)
             {
@@ -26,7 +28,7 @@ namespace Intersect.Extensions
             return NextLong(random) % maximum;
         }
 
-        public static long NextLong(this Random random, long minimum, long maximum)
+        public static long NextLong([NotNull] this Random random, long minimum, long maximum)
         {
             if (minimum >= maximum)
             {
@@ -42,7 +44,7 @@ namespace Intersect.Extensions
             return maximum - (long) (ulong.MaxValue - value);
         }
 
-        public static ulong NextULong(this Random random)
+        public static ulong NextULong([NotNull] this Random random)
         {
             var buffer = new byte[8];
             random.NextBytes(buffer);
@@ -50,36 +52,36 @@ namespace Intersect.Extensions
             return BitConverter.ToUInt64(buffer, 0);
         }
 
-        public static ulong NextULong(this Random random, ulong maximum)
+        public static ulong NextULong([NotNull] this Random random, ulong maximum)
         {
             return NextULong(random) % maximum;
         }
 
-        public static ulong NextULong(this Random random, ulong minimum, ulong maximum)
+        public static ulong NextULong([NotNull] this Random random, ulong minimum, ulong maximum)
         {
             if (minimum >= maximum)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximum), $@"'{nameof(maximum)}' must be greater than '{nameof(minimum)}'.");
+                throw new ArgumentOutOfRangeException(nameof(maximum), @"'maximum' must be greater than 'minimum'.");
             }
 
             return NextULong(random, maximum - minimum) + minimum;
         }
 
-        public static decimal NextDecimal(this Random random, decimal maximum)
+        public static decimal NextDecimal([NotNull] this Random random, decimal maximum)
         {
             if (maximum <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximum), $@"'{nameof(maximum)}' must be greater than 0.");
+                throw new ArgumentOutOfRangeException(nameof(maximum), @"'maximum' must be greater than 0.");
             }
 
             return random.NextDecimal() * maximum;
         }
 
-        public static decimal NextDecimal(this Random random, decimal minimum, decimal maximum)
+        public static decimal NextDecimal([NotNull] this Random random, decimal minimum, decimal maximum)
         {
             if (minimum >= maximum)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximum), $@"'{nameof(maximum)}' must be greater than '{nameof(minimum)}'.");
+                throw new ArgumentOutOfRangeException(nameof(maximum), @"'maximum' must be greater than 'minimum'.");
             }
 
             var midpoint = minimum / 2M + maximum / 2M;
@@ -88,21 +90,21 @@ namespace Intersect.Extensions
             return (random.NextDecimal(2M) - 1M) * halfRange + midpoint;
         }
 
-        public static double NextDouble(this Random random, double maximum)
+        public static double NextDouble([NotNull] this Random random, double maximum)
         {
             if (maximum <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximum), $@"'{nameof(maximum)}' must be greater than 0.");
+                throw new ArgumentOutOfRangeException(nameof(maximum), @"'maximum' must be greater than 0.");
             }
 
             return random.NextDouble() * maximum;
         }
 
-        public static double NextDouble(this Random random, double minimum, double maximum)
+        public static double NextDouble([NotNull] this Random random, double minimum, double maximum)
         {
             if (minimum >= maximum)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximum), $@"'{nameof(maximum)}' must be greater than '{nameof(minimum)}'.");
+                throw new ArgumentOutOfRangeException(nameof(maximum), @"'maximum' must be greater than 'minimum'.");
             }
 
             var midpoint = minimum / 2D + maximum / 2D;
@@ -111,26 +113,26 @@ namespace Intersect.Extensions
             return (random.NextDouble(2D) - 1D) * halfRange + midpoint;
         }
 
-        public static float NextFloat(this Random random)
+        public static float NextFloat([NotNull] this Random random)
         {
             return (float) random.NextDouble();
         }
 
-        public static float NextFloat(this Random random, float maximum)
+        public static float NextFloat([NotNull] this Random random, float maximum)
         {
             if (maximum <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximum), $@"'{nameof(maximum)}' must be greater than 0.");
+                throw new ArgumentOutOfRangeException(nameof(maximum), @"'maximum' must be greater than 0.");
             }
 
             return (float) NextDouble(random, maximum);
         }
 
-        public static float NextFloat(this Random random, float minimum, float maximum)
+        public static float NextFloat([NotNull] this Random random, float minimum, float maximum)
         {
             if (minimum >= maximum)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximum), $@"'{nameof(maximum)}' must be greater than '{nameof(minimum)}'.");
+                throw new ArgumentOutOfRangeException(nameof(maximum), @"'maximum' must be greater than 'minimum'.");
             }
 
             return (float) NextDouble(random, minimum, maximum);

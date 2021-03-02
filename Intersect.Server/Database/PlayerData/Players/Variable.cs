@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.GameObjects.Switches_and_Variables;
 using Intersect.Server.Entities;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect.Server.Database.PlayerData.Players
@@ -26,6 +28,7 @@ namespace Intersect.Server.Database.PlayerData.Players
 
         [NotMapped]
         [JsonIgnore]
+        [NotNull]
         public VariableValue Value { get; set; } = new VariableValue();
 
         [NotMapped]

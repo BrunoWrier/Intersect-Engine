@@ -5,13 +5,15 @@ using System.Diagnostics;
 using Intersect.Logging;
 using Intersect.Logging.Output;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Web.RestApi.Logging
 {
 
     internal sealed class IntersectLogger : Microsoft.Owin.Logging.ILogger
     {
 
-        internal IntersectLogger(string name)
+        internal IntersectLogger([NotNull] string name)
         {
             Name = string.IsNullOrWhiteSpace(name) ? "OWIN" : name;
             Logger = new Logger(
@@ -23,8 +25,10 @@ namespace Intersect.Server.Web.RestApi.Logging
             );
         }
 
+        [NotNull]
         public Logger Logger { get; }
 
+        [NotNull]
         public string Name { get; }
 
         /// <inheritdoc />

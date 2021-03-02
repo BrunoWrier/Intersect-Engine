@@ -13,10 +13,6 @@ namespace Intersect.Network
 
         bool IsValid { get; }
 
-        long ReceiveTime { get; set; }
-
-        long ProcessTime { get; set; }
-
         Dictionary<string, SanitizedValue<object>> Sanitize();
 
     }

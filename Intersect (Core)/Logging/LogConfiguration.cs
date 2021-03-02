@@ -2,24 +2,26 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 
 using Intersect.Immutability;
 using Intersect.Logging.Formatting;
 using Intersect.Logging.Output;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Logging
 {
-    /// <summary>
-    /// Configuration class for <see cref="Logger"/>.
-    /// </summary>
+
     public sealed class LogConfiguration
     {
-        private static readonly ILogFormatter DefaultFormatter = new DefaultFormatter();
 
-        private static readonly ImmutableList<ILogFormatter> DefaultFormatters =
+        [NotNull] private static readonly ILogFormatter DefaultFormatter = new DefaultFormatter();
+
+        [NotNull] private static readonly ImmutableList<ILogFormatter> DefaultFormatters =
             ImmutableList.Create<ILogFormatter>() ?? throw new InvalidOperationException();
 
-        private static readonly ImmutableList<ILogOutput> DefaultOutputs =
+        [NotNull] private static readonly ImmutableList<ILogOutput> DefaultOutputs =
             ImmutableList.Create<ILogOutput>() ?? throw new InvalidOperationException();
 
         private Immutable<IReadOnlyList<ILogFormatter>> mFormatters;
@@ -28,8 +30,11 @@ namespace Intersect.Logging
 
         private Immutable<IReadOnlyList<ILogOutput>> mOutputs;
 
+        private Immutable<bool> mPretty;
+
         private Immutable<string> mTag;
 
+        [NotNull]
         public static LogConfiguration Default => new LogConfiguration
         {
             Formatters = DefaultFormatters,
@@ -40,11 +45,15 @@ namespace Intersect.Logging
             LogLevel = Debugger.IsAttached ? LogLevel.All : LogLevel.Trace,
 #endif
 
+            Pretty = false,
+
             Tag = null
         };
 
-        public ILogFormatter Formatter => mFormatters.Value?[0] ?? DefaultFormatter;
+        [NotNull]
+        public ILogFormatter Formatter => mFormatters.Value?.FirstOrDefault() ?? DefaultFormatter;
 
+        [NotNull]
         public IReadOnlyList<ILogFormatter> Formatters
         {
             get => mFormatters.Value ?? DefaultFormatters;
@@ -57,10 +66,17 @@ namespace Intersect.Logging
             set => mLogLevel.Value = value;
         }
 
+        [NotNull]
         public IReadOnlyList<ILogOutput> Outputs
         {
             get => mOutputs.Value ?? DefaultOutputs;
             set => mOutputs.Value = value;
+        }
+
+        public bool Pretty
+        {
+            get => mPretty;
+            set => mPretty.Value = value;
         }
 
         public string Tag
@@ -69,7 +85,12 @@ namespace Intersect.Logging
             set => mTag.Value = value;
         }
 
-        internal LogConfiguration Clone() =>
-            MemberwiseClone() as LogConfiguration ?? throw new InvalidOperationException();
+        [NotNull]
+        internal LogConfiguration Clone()
+        {
+            return MemberwiseClone() as LogConfiguration ?? throw new InvalidOperationException();
+        }
+
     }
+
 }

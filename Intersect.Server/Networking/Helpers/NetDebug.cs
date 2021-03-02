@@ -8,6 +8,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 using Intersect.Logging;
 using Intersect.Server.Core;
@@ -119,6 +120,7 @@ namespace Intersect.Server.Networking.Helpers
             {
                 Bootstrapper.MainThread.NextAction = () =>
                 {
+                    Clipboard.SetText(result.Result.FullUrl);
                     Console.WriteLine(Strings.NetDebug.hastebin.ToString(result.Result.FullUrl));
                 };
             }

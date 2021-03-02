@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Core.ExperimentalFeatures
 {
 
@@ -8,11 +10,11 @@ namespace Intersect.Core.ExperimentalFeatures
 
         bool IsEnabled(Guid flagId);
 
-        bool IsEnabled(string flagName);
+        bool IsEnabled([NotNull] string flagName);
 
         bool TryGet(Guid flagId, out IExperimentalFlag flag);
 
-        bool TryGet(string flagName, out IExperimentalFlag flag);
+        bool TryGet([NotNull] string flagName, out IExperimentalFlag flag);
 
     }
 

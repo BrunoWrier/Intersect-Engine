@@ -8,29 +8,31 @@ using Intersect.Client.General;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Client.Interface.Game
 {
 
     public class EscapeMenu : ImagePanel
     {
 
-        private readonly Button mClose;
+        [NotNull] private readonly Button mClose;
 
-        private readonly ImagePanel mContainer;
+        [NotNull] private readonly ImagePanel mContainer;
 
-        private readonly Button mExitToDesktop;
+        [NotNull] private readonly Button mExitToDesktop;
 
-        private readonly Button mGoToCharacterSelect;
+        [NotNull] private readonly Button mGoToCharacterSelect;
 
-        private readonly Button mLogout;
+        [NotNull] private readonly Button mLogout;
 
-        private readonly Button mOptions;
+        [NotNull] private readonly Button mOptions;
 
-        private readonly OptionsWindow mOptionsWindow;
+        [NotNull] private readonly OptionsWindow mOptionsWindow;
 
-        private readonly Label mTitle;
+        [NotNull] private readonly Label mTitle;
 
-        public EscapeMenu(Canvas gameCanvas) : base(gameCanvas, "EscapeMenu")
+        public EscapeMenu([NotNull] Canvas gameCanvas) : base(gameCanvas, "EscapeMenu")
         {
             Interface.InputBlockingElements?.Add(this);
 
@@ -114,8 +116,6 @@ namespace Intersect.Client.Interface.Game
             {
                 BringToFront();
             }
-
-            mGoToCharacterSelect.IsDisabled = Globals.Me?.CombatTimer > Globals.System.GetTimeMs();
         }
 
         private void Options_Clicked(Base sender, ClickedEventArgs arguments)

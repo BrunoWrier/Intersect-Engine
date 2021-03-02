@@ -2,6 +2,8 @@
 
 using Intersect.Localization;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.CommandParsing.Arguments
 {
 
@@ -13,7 +15,7 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
         private readonly ArgumentRequiredPredicate mRequiredPredicate;
 
         protected CommandArgument(
-            LocaleArgument localization,
+            [NotNull] LocaleArgument localization,
             bool required = false,
             bool positional = false,
             bool allowsMultiple = false,
@@ -28,8 +30,8 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
         }
 
         protected CommandArgument(
-            LocaleArgument localization,
-            ArgumentRequiredPredicate requiredPredicate,
+            [NotNull] LocaleArgument localization,
+            [NotNull] ArgumentRequiredPredicate requiredPredicate,
             bool positional = false,
             bool allowsMultiple = false,
             TValue defaultValue = default(TValue)
@@ -43,6 +45,7 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
             DefaultValue = defaultValue;
         }
 
+        [NotNull]
         public LocaleArgument Localization { get; }
 
         public char ShortName => Localization.ShortName;
@@ -99,9 +102,9 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
     {
 
         protected ArrayCommandArgument(
-            LocaleArgument localization,
+            [NotNull] LocaleArgument localization,
             int count,
-            string delimeter = null
+            [CanBeNull] string delimeter = null
         ) : base(localization)
         {
             if (count < 1)
@@ -124,7 +127,7 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
     public abstract class CommandArgument : CommandArgument<object>
     {
 
-        protected CommandArgument(LocaleArgument localization) : base(localization)
+        protected CommandArgument([NotNull] LocaleArgument localization) : base(localization)
         {
         }
 

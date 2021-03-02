@@ -1,6 +1,8 @@
 ﻿using Intersect.Network;
 using Intersect.Network.Events;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Client.Framework.Network
 {
 
@@ -34,17 +36,17 @@ namespace Intersect.Client.Framework.Network
             DataReceived?.Invoke(packet);
         }
 
-        protected void OnConnected(INetworkLayerInterface sender, ConnectionEventArgs connectionEventArgs)
+        protected void OnConnected([NotNull] INetworkLayerInterface sender, [NotNull] ConnectionEventArgs connectionEventArgs)
         {
             Connected?.Invoke(sender, connectionEventArgs);
         }
 
-        protected void OnConnectionFailed(INetworkLayerInterface sender, ConnectionEventArgs connectionEventArgs, bool denied)
+        protected void OnConnectionFailed([NotNull] INetworkLayerInterface sender, [NotNull] ConnectionEventArgs connectionEventArgs, bool denied)
         {
             ConnectionFailed?.Invoke(sender, connectionEventArgs, denied);
         }
 
-        protected void OnDisconnected(INetworkLayerInterface sender, ConnectionEventArgs connectionEventArgs)
+        protected void OnDisconnected([NotNull] INetworkLayerInterface sender, [NotNull] ConnectionEventArgs connectionEventArgs)
         {
             Disconnected?.Invoke(sender, connectionEventArgs);
         }
@@ -53,10 +55,10 @@ namespace Intersect.Client.Framework.Network
 
     public delegate void DataReceivedHandler(IPacket packet);
 
-    public delegate void ConnectedHandler(INetworkLayerInterface sender, ConnectionEventArgs connectionEventArgs);
+    public delegate void ConnectedHandler([NotNull] INetworkLayerInterface sender, [NotNull] ConnectionEventArgs connectionEventArgs);
 
-    public delegate void ConnectionFailedHandler(INetworkLayerInterface sender, ConnectionEventArgs connectionEventArgs, bool denied);
+    public delegate void ConnectionFailedHandler([NotNull] INetworkLayerInterface sender, [NotNull] ConnectionEventArgs connectionEventArgs, bool denied);
 
-    public delegate void DisconnectedHandler(INetworkLayerInterface sender, ConnectionEventArgs connectionEventArgs);
+    public delegate void DisconnectedHandler([NotNull] INetworkLayerInterface sender, [NotNull] ConnectionEventArgs connectionEventArgs);
 
 }

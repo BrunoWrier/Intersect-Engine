@@ -6,20 +6,23 @@ using System.Linq;
 
 using Intersect.Server.Core.CommandParsing.Commands;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.CommandParsing.Arguments
 {
 
     public sealed class ArgumentValuesMap : IEnumerable<KeyValuePair<ICommandArgument, ArgumentValues>>
     {
 
-        private readonly IDictionary<ICommandArgument, ArgumentValues> mValuesMap;
+        [NotNull] private readonly IDictionary<ICommandArgument, ArgumentValues> mValuesMap;
 
-        public ArgumentValuesMap(IEnumerable<KeyValuePair<ICommandArgument, ArgumentValues>> pairs = null)
+        public ArgumentValuesMap([CanBeNull] IEnumerable<KeyValuePair<ICommandArgument, ArgumentValues>> pairs = null)
         {
             mValuesMap = pairs?.ToDictionary(pair => pair.Key, pair => pair.Value) ??
                          new Dictionary<ICommandArgument, ArgumentValues>();
         }
 
+        [NotNull]
         public ImmutableDictionary<ICommandArgument, ArgumentValues> Values =>
             mValuesMap.ToImmutableDictionary() ?? throw new InvalidOperationException();
 
@@ -33,17 +36,19 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
             return GetEnumerator();
         }
 
-        public ArgumentValues Find(ICommandArgument argument)
+        [CanBeNull]
+        public ArgumentValues Find([NotNull] ICommandArgument argument)
         {
             return TryFind(argument, out var values) ? values : null;
         }
 
-        public bool TryFind(ICommandArgument argument, out ArgumentValues values)
+        public bool TryFind([NotNull] ICommandArgument argument, out ArgumentValues values)
         {
             return mValuesMap.TryGetValue(argument, out values);
         }
 
-        public TValue Find<TValue>(ICommandArgument argument, int index = 0, bool allowImplicit = true)
+        [CanBeNull]
+        public TValue Find<TValue>([NotNull] ICommandArgument argument, int index = 0, bool allowImplicit = true)
         {
             TryFind(argument, out TValue value, index, allowImplicit);
 
@@ -51,7 +56,7 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
         }
 
         public bool TryFind<TValue>(
-            ICommandArgument argument,
+            [NotNull] ICommandArgument argument,
             out TValue value,
             int index = 0,
             bool allowImplicit = true
@@ -69,14 +74,15 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
             return false;
         }
 
-        public IEnumerable<TValue> FindAll<TValue>(ICommandArgument argument)
+        [CanBeNull]
+        public IEnumerable<TValue> FindAll<TValue>([NotNull] ICommandArgument argument)
         {
             TryFindAll<TValue>(argument, out var values);
 
             return values;
         }
 
-        public bool TryFindAll<TValue>(ICommandArgument argument, out IEnumerable<TValue> values)
+        public bool TryFindAll<TValue>([NotNull] ICommandArgument argument, out IEnumerable<TValue> values)
         {
             if (TryFind(argument, out var argumentValues))
             {
@@ -90,31 +96,35 @@ namespace Intersect.Server.Core.CommandParsing.Arguments
             return false;
         }
 
-        public TValue Find<TValue>(CommandArgument<TValue> argument, int index = 0)
+        [CanBeNull]
+        public TValue Find<TValue>([NotNull] CommandArgument<TValue> argument, int index = 0)
         {
             return Find<TValue>(argument as ICommandArgument, index);
         }
 
-        public bool TryFind<TValue>(CommandArgument<TValue> argument, out TValue value, int index = 0)
+        public bool TryFind<TValue>([NotNull] CommandArgument<TValue> argument, out TValue value, int index = 0)
         {
             return TryFind(argument as ICommandArgument, out value, index);
         }
 
-        public IEnumerable<TValue> FindAll<TValue>(ArrayCommandArgument<TValue> argument)
+        [CanBeNull]
+        public IEnumerable<TValue> FindAll<TValue>([NotNull] ArrayCommandArgument<TValue> argument)
         {
             return FindAll<TValue>(argument as ICommandArgument);
         }
 
-        public bool TryFindAll<TValue>(ArrayCommandArgument<TValue> argument, out IEnumerable<TValue> value)
+        public bool TryFindAll<TValue>([NotNull] ArrayCommandArgument<TValue> argument, out IEnumerable<TValue> value)
         {
             return TryFindAll(argument as ICommandArgument, out value);
         }
 
+        [NotNull]
         public ParserResult AsResult(ICommand command = null)
         {
             return new ParserResult(command, this);
         }
 
+        [NotNull]
         public ParserResult<TCommand> AsResult<TCommand>(TCommand command) where TCommand : ICommand
         {
             return new ParserResult<TCommand>(command, this);

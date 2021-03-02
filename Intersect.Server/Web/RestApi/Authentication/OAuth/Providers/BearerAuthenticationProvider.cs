@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Intersect.Security.Claims;
 using Intersect.Server.Database.PlayerData.Api;
 
+using JetBrains.Annotations;
+
 using Microsoft.Owin.Security.OAuth;
 
 namespace Intersect.Server.Web.RestApi.Authentication.OAuth.Providers
@@ -12,7 +14,7 @@ namespace Intersect.Server.Web.RestApi.Authentication.OAuth.Providers
     public class BearerAuthenticationProvider : OAuthBearerAuthenticationProvider
     {
 
-        public override async Task ValidateIdentity(OAuthValidateIdentityContext context)
+        public override async Task ValidateIdentity([NotNull] OAuthValidateIdentityContext context)
         {
             var owinContext = context.OwinContext;
 

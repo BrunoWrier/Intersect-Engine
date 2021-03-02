@@ -1,4 +1,6 @@
-﻿namespace Intersect.Configuration
+﻿using JetBrains.Annotations;
+
+namespace Intersect.Configuration
 {
 
     /// <summary>
@@ -11,6 +13,7 @@
         /// <summary>
         /// The configuration instance for this object
         /// </summary>
+        [NotNull]
         TConfiguration Configuration { get; }
 
     }

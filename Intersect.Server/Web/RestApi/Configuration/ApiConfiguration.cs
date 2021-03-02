@@ -10,6 +10,8 @@ using Intersect.Configuration;
 using Intersect.Logging;
 using Intersect.Server.Web.RestApi.Authentication.OAuth;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -105,9 +107,11 @@ namespace Intersect.Server.Web.RestApi.Configuration
         private Dictionary<string, object> mRouteAuthorization;
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [NotNull]
         public string DataProtectionKey { get; private set; }
 
         [JsonIgnore]
+        [NotNull]
         public IReadOnlyDictionary<string, object> RouteAuthorization =>
             new ReadOnlyDictionary<string, object>(mRouteAuthorization);
 
@@ -187,7 +191,8 @@ namespace Intersect.Server.Web.RestApi.Configuration
 
         #endregion
 
-        public static ApiConfiguration Create(string filePath = DefaultPath)
+        [NotNull]
+        public static ApiConfiguration Create([CanBeNull] string filePath = DefaultPath)
         {
             var configuration = new ApiConfiguration();
 

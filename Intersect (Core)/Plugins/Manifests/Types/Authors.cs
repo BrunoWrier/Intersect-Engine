@@ -1,4 +1,5 @@
-﻿
+﻿using JetBrains.Annotations;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -39,6 +40,7 @@ namespace Intersect.Plugins.Manifests.Types
         /// <summary>
         /// Backing enumerable of authors.
         /// </summary>
+        [NotNull]
         private readonly Author[] mAuthors;
 
         /// <summary>
@@ -54,13 +56,13 @@ namespace Intersect.Plugins.Manifests.Types
         /// Initializes a new instance of the <see cref="Authors"/> structure.
         /// </summary>
         /// <param name="authors">the <see cref="Author"/>s in this list</param>
-        public Authors(params Author[] authors) : this(authors as IEnumerable<Author>) { }
+        public Authors([NotNull] params Author[] authors) : this(authors as IEnumerable<Author>) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Authors"/> structure.
         /// </summary>
         /// <param name="authors">the <see cref="Author"/>s in this list</param>
-        public Authors(IEnumerable<Author> authors)
+        public Authors([NotNull] IEnumerable<Author> authors)
         {
             mAuthors = authors.ToArray();
             mHashCode = ValueUtils.ComputeHashCode(mAuthors);
@@ -166,8 +168,8 @@ namespace Intersect.Plugins.Manifests.Types
         /// <param name="comparisonFunc">indexed equality comparison function</param>
         /// <returns>equality as determined by <paramref name="comparisonFunc"/></returns>
         private static bool Equals<TEnumerableValue>(
-            IEnumerable<TEnumerableValue> other,
-            Func<TEnumerableValue, int, bool> comparisonFunc
+            [CanBeNull] IEnumerable<TEnumerableValue> other,
+            [NotNull] Func<TEnumerableValue, int, bool> comparisonFunc
         ) =>
             other?.Select(comparisonFunc).All(equality => equality) ?? false;
 
@@ -190,7 +192,7 @@ namespace Intersect.Plugins.Manifests.Types
         /// <param name="authorString">the <see cref="Author"/> <see cref="string"/> to compare</param>
         /// <param name="index">the index to compare at</param>
         /// <returns>the result of <see cref="Author.CompareTo(Author)"/> or -1 <paramref name="index"/> is out of bounds</returns>
-        private int CompareElement(string authorString, int index) =>
+        private int CompareElement([CanBeNull] string authorString, int index) =>
             index < mAuthors.Length ? mAuthors[index].CompareTo(authorString) : -1;
 
         /// <summary>
@@ -222,7 +224,7 @@ namespace Intersect.Plugins.Manifests.Types
         /// <returns>an <see cref="Authors"/> instance</returns>
         /// <seealso cref="Author(string)"/>
         /// <seealso cref="JsonConvert.DeserializeObject{T}(string)"/>
-        public static implicit operator Authors(string authorsString)
+        public static implicit operator Authors([NotNull] string authorsString)
         {
             try
             {
@@ -248,7 +250,7 @@ namespace Intersect.Plugins.Manifests.Types
         /// <param name="authorStrings">an array of <see cref="Author"/> <see cref="string"/>s</param>
         /// <returns>an <see cref="Authors"/> instance</returns>
         /// <seealso cref="Author(string)"/>
-        public static implicit operator Authors(string[] authorStrings) =>
+        public static implicit operator Authors([NotNull] string[] authorStrings) =>
             new Authors(authorStrings.Select(authorString => new Author(authorString)));
 
         /// <summary>
@@ -256,8 +258,8 @@ namespace Intersect.Plugins.Manifests.Types
         /// </summary>
         /// <param name="authors">an array of <see cref="Author"/>s</param>
         /// <returns>an <see cref="Author"/> array</returns>
-        public static implicit operator Authors(Author[] authors) =>
-            new Authors(authors ?? Array.Empty<Author>());
+        public static implicit operator Authors([CanBeNull] Author[] authors) =>
+            new Authors(authors ?? new Author[0]);
 
         /// <summary>
         /// Converts <see cref="Authors"/> to <see cref="string"/> using <see cref="ToString"/>.

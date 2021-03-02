@@ -143,14 +143,11 @@ namespace Intersect.GameObjects.Maps
 
         public byte Distance { get; set; }
 
-        public int LoopInterval { get; set; }
-
         public override MapAttribute Clone()
         {
             var att = (MapSoundAttribute) base.Clone();
             att.File = File;
             att.Distance = Distance;
-            att.LoopInterval = LoopInterval;
 
             return att;
         }

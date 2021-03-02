@@ -3,19 +3,21 @@ using System.Collections.Generic;
 
 using Intersect.Logging;
 
+using JetBrains.Annotations;
+
 using NCalc;
 
 namespace Intersect.Utilities
 {
 
-    public delegate void FormulaFunction(FunctionArgs args);
+    public delegate void FormulaFunction([NotNull] FunctionArgs args);
 
-    public delegate void FormulaParameter(ParameterArgs args);
+    public delegate void FormulaParameter([NotNull] ParameterArgs args);
 
     public class Formula
     {
 
-        public static readonly List<string> SYSTEM_MATH_FUNCTIONS = new List<string>
+        [NotNull] public static readonly List<string> SYSTEM_MATH_FUNCTIONS = new List<string>
         {
             "Abs",
             "Acos",
@@ -43,9 +45,9 @@ namespace Intersect.Utilities
             "Truncate"
         };
 
-        private string mLastSource;
+        [CanBeNull] private string mLastSource;
 
-        private string mSource;
+        [NotNull] private string mSource;
 
         public Formula(string source)
         {
@@ -64,6 +66,7 @@ namespace Intersect.Utilities
             }
         }
 
+        [NotNull]
         public string Source
         {
             get => mSource;
@@ -88,10 +91,13 @@ namespace Intersect.Utilities
             }
         }
 
+        [NotNull]
         protected Expression Expression { get; set; }
 
+        [NotNull]
         protected IDictionary<string, FormulaFunction> Functions { get; }
 
+        [NotNull]
         protected IDictionary<string, FormulaParameter> Parameters { get; }
 
         public bool Load()
@@ -165,7 +171,7 @@ namespace Intersect.Utilities
         {
         }
 
-        public bool RegisterFunction(string name, FormulaFunction function, bool shouldOverride = false)
+        public bool RegisterFunction([NotNull] string name, FormulaFunction function, bool shouldOverride = false)
         {
             if (Functions.ContainsKey(name))
             {
@@ -192,7 +198,7 @@ namespace Intersect.Utilities
         {
         }
 
-        public bool RegisterParameter(string name, object value, bool shouldOverride = false)
+        public bool RegisterParameter([NotNull] string name, object value, bool shouldOverride = false)
         {
             if (Expression.Parameters == null)
             {
@@ -214,7 +220,7 @@ namespace Intersect.Utilities
             return true;
         }
 
-        public bool RegisterEvaluatedParameter(string name, object value, bool shouldOverride = false)
+        public bool RegisterEvaluatedParameter([NotNull] string name, object value, bool shouldOverride = false)
         {
             if (Parameters.ContainsKey(name))
             {

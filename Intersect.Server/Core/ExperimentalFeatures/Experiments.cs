@@ -2,6 +2,8 @@
 
 using Intersect.Core.ExperimentalFeatures;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect.Server.Core.ExperimentalFeatures
@@ -23,6 +25,7 @@ namespace Intersect.Server.Core.ExperimentalFeatures
             PostgreSQL = new ExperimentalFlag(nameof(PostgreSQL), NamespaceId, parentFlag: All);
         }
 
+        [NotNull]
         public static Experiments Instance
         {
             get => CommonExperiments<Experiments>.Instance;

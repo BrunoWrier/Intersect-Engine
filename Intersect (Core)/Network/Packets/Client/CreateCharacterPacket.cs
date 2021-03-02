@@ -3,17 +3,12 @@ using System.Collections.Generic;
 
 using Intersect.Collections;
 using Intersect.GameObjects;
-using MessagePack;
 
 namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class CreateCharacterPacket : IntersectPacket
+
+    public class CreateCharacterPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public CreateCharacterPacket()
-        {
-        }
 
         public CreateCharacterPacket(string name, Guid classId, int sprite)
         {
@@ -22,13 +17,10 @@ namespace Intersect.Network.Packets.Client
             Sprite = sprite;
         }
 
-        [Key(0)]
         public string Name { get; set; }
 
-        [Key(1)]
         public Guid ClassId { get; set; }
 
-        [Key(2)]
         public int Sprite { get; set; }
 
         public override Dictionary<string, SanitizedValue<object>> Sanitize()

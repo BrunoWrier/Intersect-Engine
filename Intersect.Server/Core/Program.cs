@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 
 namespace Intersect.Server.Core
 {
@@ -25,13 +24,19 @@ namespace Intersect.Server.Core
             }
             catch (Exception exception)
             {
-                var type = Type.GetType("Intersect.Server.Core.ServerContext", true);
+                var type = Type.GetType("Intersect.Server.Core.Bootstrapper", true);
                 Debug.Assert(type != null, "type != null");
 
-                var staticMethodInfo = type.GetMethod("DispatchUnhandledException", BindingFlags.Static | BindingFlags.NonPublic);
+                var staticMethodInfo = type.GetMethod("OnUnhandledException");
                 Debug.Assert(staticMethodInfo != null, nameof(staticMethodInfo) + " != null");
 
-                staticMethodInfo.Invoke(null, new object[] { exception.InnerException ?? exception, true });
+                staticMethodInfo.Invoke(
+                    null, new object[]
+                    {
+                        null,
+                        new UnhandledExceptionEventArgs(exception.InnerException ?? exception, true)
+                    }
+                );
             }
         }
 

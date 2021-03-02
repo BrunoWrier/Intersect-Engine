@@ -1,9 +1,7 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class HidePicturePacket : IntersectPacket
+
+    public class HidePicturePacket : CerasPacket
     {
 
     }

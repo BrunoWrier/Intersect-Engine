@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class ActionMsgPacket : IntersectPacket
+
+    public class ActionMsgPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public ActionMsgPacket()
-        {
-        }
 
         public ActionMsgPacket(Guid mapId, int x, int y, string message, Color color)
         {
@@ -20,19 +15,14 @@ namespace Intersect.Network.Packets.Server
             Color = color;
         }
 
-        [Key(0)]
         public Guid MapId { get; set; }
 
-        [Key(1)]
         public int X { get; set; }
 
-        [Key(2)]
         public int Y { get; set; }
 
-        [Key(3)]
         public string Message { get; set; }
 
-        [Key(4)]
         public Color Color { get; set; }
 
     }

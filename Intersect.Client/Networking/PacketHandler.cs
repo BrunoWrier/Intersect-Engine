@@ -1,4 +1,8 @@
-﻿using Intersect.Client.Core;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Entities.Projectiles;
@@ -9,7 +13,6 @@ using Intersect.Client.Interface.Menu;
 using Intersect.Client.Items;
 using Intersect.Client.Localization;
 using Intersect.Client.Maps;
-using Intersect.Core;
 using Intersect.Enums;
 using Intersect.GameObjects;
 using Intersect.GameObjects.Maps;
@@ -19,129 +22,34 @@ using Intersect.Network;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Server;
 using Intersect.Utilities;
-using Newtonsoft.Json;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Intersect.Client.Networking
 {
 
-    internal sealed class PacketHandler
+    public static class PacketHandler
     {
-        private sealed class VirtualPacketSender : IPacketSender
-        {
-            public IApplicationContext ApplicationContext { get; }
 
-            public VirtualPacketSender(IApplicationContext applicationContext) =>
-                ApplicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
-            
-            #region Implementation of IPacketSender
+        public static long Ping = 0;
 
-            /// <inheritdoc />
-            public bool Send(IPacket packet)
-            {
-                if (packet is IntersectPacket intersectPacket)
-                {
-                    Network.SendPacket(intersectPacket);
-                    return true;
-                }
+        public static long PingTime;
 
-                return false;
-            }
-
-            #endregion
-        }
-
-        public long Ping { get; set; } = 0;
-
-        public long PingTime { get; set; }
-
-        public IClientContext Context { get; }
-
-        public Logger Logger => Context.Logger;
-
-        public PacketHandlerRegistry Registry { get; }
-
-        public IPacketSender VirtualSender { get; }
-
-        public PacketHandler(IClientContext context, PacketHandlerRegistry packetHandlerRegistry)
-        {
-            Context = context ?? throw new ArgumentNullException(nameof(context));
-            Registry = packetHandlerRegistry ?? throw new ArgumentNullException(nameof(packetHandlerRegistry));
-
-            if (!Registry.TryRegisterAvailableMethodHandlers(GetType(), this, false) || Registry.IsEmpty)
-            {
-                throw new InvalidOperationException("Failed to register method handlers, see logs for more details.");
-            }
-
-            VirtualSender = new VirtualPacketSender(context);
-        }
-
-        public bool HandlePacket(IPacket packet)
+        public static bool HandlePacket(IPacket packet)
         {
             if (packet is AbstractTimedPacket timedPacket)
             {
                 Timing.Global.Synchronize(timedPacket.UTC, timedPacket.Offset);
             }
 
-            if (!(packet is IntersectPacket))
+            if (packet is CerasPacket)
             {
-                return false;
-            }
-
-            if (!packet.IsValid)
-            {
-                return false;
-            }
-
-            if (!Registry.TryGetHandler(packet, out HandlePacketGeneric handler))
-            {
-                Logger.Error($"No registered handler for {packet.GetType().FullName}!");
-
-                return false;
-            }
-
-            if (Registry.TryGetPreprocessors(packet, out var preprocessors))
-            {
-                if (!preprocessors.All(preprocessor => preprocessor.Handle(VirtualSender, packet)))
-                {
-                    // Preprocessors are intended to be silent filter functions
-                    return false;
-                }
-            }
-
-            if (Registry.TryGetPreHooks(packet, out var preHooks))
-            {
-                if (!preHooks.All(hook => hook.Handle(VirtualSender, packet)))
-                {
-                    // Hooks should not fail, if they do that's an error
-                    Logger.Error($"PreHook handler failed for {packet.GetType().FullName}.");
-                    return false;
-                }
-            }
-
-            if (!handler(VirtualSender, packet))
-            {
-                return false;
-            }
-
-            if (Registry.TryGetPostHooks(packet, out var postHooks))
-            {
-                if (!postHooks.All(hook => hook.Handle(VirtualSender, packet)))
-                {
-                    // Hooks should not fail, if they do that's an error
-                    Logger.Error($"PostHook handler failed for {packet.GetType().FullName}.");
-                    return false;
-                }
+                HandlePacket((dynamic)packet);
             }
 
             return true;
         }
 
         //PingPacket
-        public void HandlePacket(IPacketSender packetSender, PingPacket packet)
+        private static void HandlePacket(PingPacket packet)
         {
             if (packet.RequestingReply)
             {
@@ -155,7 +63,7 @@ namespace Intersect.Client.Networking
         }
 
         //ConfigPacket
-        public void HandlePacket(IPacketSender packetSender, ConfigPacket packet)
+        private static void HandlePacket(ConfigPacket packet)
         {
             Options.LoadFromServer(packet.Config);
             Globals.Bank = new Item[Options.MaxBankSlots];
@@ -163,23 +71,23 @@ namespace Intersect.Client.Networking
         }
 
         //JoinGamePacket
-        public void HandlePacket(IPacketSender packetSender, JoinGamePacket packet)
+        private static void HandlePacket(JoinGamePacket packet)
         {
             Main.JoinGame();
             Globals.JoiningGame = true;
         }
 
         //MapAreaPacket
-        public void HandlePacket(IPacketSender packetSender, MapAreaPacket packet)
+        private static void HandlePacket(MapAreaPacket packet)
         {
             foreach (var map in packet.Maps)
             {
-                HandleMap(packetSender, map);
+                HandleMap(map);
             }
         }
 
         //MapPacket
-        private void HandleMap(IPacketSender packetSender, MapPacket packet)
+        private static void HandleMap(MapPacket packet)
         {
             var mapId = packet.MapId;
             var map = MapInstance.Get(mapId);
@@ -216,12 +124,12 @@ namespace Intersect.Client.Networking
                 //Process Entities and Items if provided in this packet
                 if (packet.MapEntities != null)
                 {
-                    HandlePacket(packet.MapEntities);
+                    HandlePacket((dynamic) packet.MapEntities);
                 }
 
                 if (packet.MapItems != null)
                 {
-                    HandlePacket(packet.MapItems);
+                    HandlePacket((dynamic) packet.MapItems);
                 }
 
                 if (Globals.PendingEvents.ContainsKey(mapId))
@@ -235,18 +143,21 @@ namespace Intersect.Client.Networking
                 }
             }
 
-            MapInstance.OnMapLoaded?.Invoke(map);
+            if (MapInstance.OnMapLoaded != null)
+            {
+                MapInstance.OnMapLoaded(map);
+            }
         }
 
         //MapPacket
-        public void HandlePacket(IPacketSender packetSender, MapPacket packet)
+        private static void HandlePacket(MapPacket packet)
         {
-            HandleMap(packetSender, packet);
+            HandleMap(packet);
             Globals.Me.FetchNewMaps();
         }
 
         //PlayerEntityPacket
-        public void HandlePacket(IPacketSender packetSender, PlayerEntityPacket packet)
+        private static void HandlePacket(PlayerEntityPacket packet)
         {
             var en = Globals.GetEntity(packet.EntityId, EntityTypes.Player);
             if (en != null)
@@ -268,7 +179,7 @@ namespace Intersect.Client.Networking
         }
 
         //NpcEntityPacket
-        public void HandlePacket(IPacketSender packetSender, NpcEntityPacket packet)
+        private static void HandlePacket(NpcEntityPacket packet)
         {
             var en = Globals.GetEntity(packet.EntityId, EntityTypes.GlobalEntity);
             if (en != null)
@@ -284,7 +195,7 @@ namespace Intersect.Client.Networking
         }
 
         //ResourceEntityPacket
-        public void HandlePacket(IPacketSender packetSender, ResourceEntityPacket packet)
+        private static void HandlePacket(ResourceEntityPacket packet)
         {
             var en = Globals.GetEntity(packet.EntityId, EntityTypes.Resource);
             if (en != null)
@@ -298,7 +209,7 @@ namespace Intersect.Client.Networking
         }
 
         //ProjectileEntityPacket
-        public void HandlePacket(IPacketSender packetSender, ProjectileEntityPacket packet)
+        private static void HandlePacket(ProjectileEntityPacket packet)
         {
             var en = Globals.GetEntity(packet.EntityId, EntityTypes.Projectile);
             if (en != null)
@@ -312,7 +223,7 @@ namespace Intersect.Client.Networking
         }
 
         //EventEntityPacket
-        public void HandlePacket(IPacketSender packetSender, EventEntityPacket packet)
+        private static void HandlePacket(EventEntityPacket packet)
         {
             var map = MapInstance.Get(packet.MapId);
             if (map != null)
@@ -342,12 +253,12 @@ namespace Intersect.Client.Networking
         }
 
         //MapEntitiesPacket
-        public void HandlePacket(IPacketSender packetSender, MapEntitiesPacket packet)
+        private static void HandlePacket(MapEntitiesPacket packet)
         {
             var mapEntities = new Dictionary<Guid, List<Guid>>();
             foreach (var pkt in packet.MapEntities)
             {
-                HandlePacket(pkt);
+                HandlePacket((dynamic) pkt);
 
                 if (!mapEntities.ContainsKey(pkt.MapId))
                 {
@@ -364,7 +275,7 @@ namespace Intersect.Client.Networking
                 {
                     if (entity.Value.CurrentMap == entities.Key && !entities.Value.Contains(entity.Key))
                     {
-                        if (!Globals.EntitiesToDispose.Contains(entity.Key) && entity.Value != Globals.Me && !(entity.Value is Projectile))
+                        if (!Globals.EntitiesToDispose.Contains(entity.Key) && entity.Value != Globals.Me)
                         {
                             Globals.EntitiesToDispose.Add(entity.Key);
                         }
@@ -374,7 +285,7 @@ namespace Intersect.Client.Networking
         }
 
         //EntityPositionPacket
-        public void HandlePacket(IPacketSender packetSender, EntityPositionPacket packet)
+        private static void HandlePacket(EntityPositionPacket packet)
         {
             var id = packet.Id;
             var type = packet.Type;
@@ -434,7 +345,7 @@ namespace Intersect.Client.Networking
         }
 
         //EntityLeftPacket
-        public void HandlePacket(IPacketSender packetSender, EntityLeftPacket packet)
+        private static void HandlePacket(EntityLeftPacket packet)
         {
             var id = packet.Id;
             var type = packet.Type;
@@ -465,24 +376,18 @@ namespace Intersect.Client.Networking
         }
 
         //ChatMsgPacket
-        public void HandlePacket(IPacketSender packetSender, ChatMsgPacket packet)
+        private static void HandlePacket(ChatMsgPacket packet)
         {
             ChatboxMsg.AddMessage(
                 new ChatboxMsg(
-                    packet.Message ?? "", new Color(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B), packet.Type,
+                    packet.Message ?? "", new Color(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B),
                     packet.Target
                 )
             );
         }
 
-        //AnnouncementPacket
-        public void HandlePacket(IPacketSender packetSender, AnnouncementPacket packet)
-        {
-            Interface.Interface.GameUi.AnnouncementWindow.ShowAnnouncement(packet.Message, packet.Duration);   
-        }
-
         //ActionMsgPacket
-        public void HandlePacket(IPacketSender packetSender, ActionMsgPacket packet)
+        private static void HandlePacket(ActionMsgPacket packet)
         {
             var map = MapInstance.Get(packet.MapId);
             if (map != null)
@@ -497,11 +402,11 @@ namespace Intersect.Client.Networking
         }
 
         //GameDataPacket
-        public void HandlePacket(IPacketSender packetSender, GameDataPacket packet)
+        private static void HandlePacket(GameDataPacket packet)
         {
             foreach (var pkt in packet.GameObjects)
             {
-                HandlePacket(pkt);
+                HandlePacket((dynamic) pkt);
             }
 
             CustomColors.Load(packet.ColorsJson);
@@ -509,7 +414,7 @@ namespace Intersect.Client.Networking
         }
 
         //MapListPacket
-        public void HandlePacket(IPacketSender packetSender, MapListPacket packet)
+        private static void HandlePacket(MapListPacket packet)
         {
             MapList.List.JsonData = packet.MapListData;
             MapList.List.PostLoad(MapBase.Lookup, false, true);
@@ -518,7 +423,7 @@ namespace Intersect.Client.Networking
         }
 
         //EntityMovePacket
-        public void HandlePacket(IPacketSender packetSender, EntityMovePacket packet)
+        private static void HandlePacket(EntityMovePacket packet)
         {
             var id = packet.Id;
             var type = packet.Type;
@@ -560,11 +465,6 @@ namespace Intersect.Client.Networking
                 return;
             }
 
-            if (en is Player && Options.Combat.MovementCancelsCast)
-            {
-                en.CastTime = 0;
-            }
-
             if (en.Dashing != null || en.DashQueue.Count > 0)
             {
                 return;
@@ -583,10 +483,6 @@ namespace Intersect.Client.Networking
                 en.X = x;
                 en.Y = y;
                 en.Dir = dir;
-                if (en is Player p)
-                {
-                    p.MoveDir = dir;
-                }
                 en.IsMoving = true;
 
                 switch (en.Dir)
@@ -645,132 +541,8 @@ namespace Intersect.Client.Networking
             }
         }
 
-        public void HandlePacket(IPacketSender packetSender, MapEntityVitalsPacket packet)
-        {
-            // Get our map, cancel out if it doesn't exist.
-            var map = MapInstance.Get(packet.MapId);
-            if (map == null)
-            {
-                return;
-            }
-
-            foreach (var en in packet.EntityUpdates)
-            {
-                Entity entity = null;
-
-                if (en.Type < EntityTypes.Event)
-                {
-                    if (!Globals.Entities.ContainsKey(en.Id))
-                    {
-                        return;
-                    }
-
-                    entity = Globals.Entities[en.Id];
-                }
-                else
-                {
-                    if (!map.LocalEntities.ContainsKey(en.Id))
-                    {
-                        return;
-                    }
-
-                    entity = map.LocalEntities[en.Id];
-                }
-
-                if (entity == null)
-                {
-                    return;
-                }
-
-                entity.Vital = en.Vitals;
-                entity.MaxVital = en.MaxVitals;
-
-                if (entity == Globals.Me)
-                {
-                    if (en.CombatTimeRemaining > 0)
-                    {
-                        Globals.Me.CombatTimer = Globals.System.GetTimeMs() + en.CombatTimeRemaining;
-                    }
-                }
-            }
-        }
-
-        public void HandlePacket(IPacketSender packetSender, MapEntityStatusPacket packet)
-        {
-            // Get our map, cancel out if it doesn't exist.
-            var map = MapInstance.Get(packet.MapId);
-            if (map == null)
-            {
-                return;
-            }
-
-            foreach (var en in packet.EntityUpdates)
-            {
-                Entity entity = null;
-
-                if (en.Type < EntityTypes.Event)
-                {
-                    if (!Globals.Entities.ContainsKey(en.Id))
-                    {
-                        return;
-                    }
-
-                    entity = Globals.Entities[en.Id];
-                }
-                else
-                {
-                    if (!map.LocalEntities.ContainsKey(en.Id))
-                    {
-                        return;
-                    }
-
-                    entity = map.LocalEntities[en.Id];
-                }
-
-                if (entity == null)
-                {
-                    return;
-                }
-
-                //Update status effects
-                entity.Status.Clear();
-                foreach (var status in en.Statuses)
-                {
-                    var instance = new Status(
-                        status.SpellId, status.Type, status.TransformSprite, status.TimeRemaining, status.TotalDuration
-                    );
-
-                    entity.Status.Add(instance);
-
-                    if (instance.Type == StatusTypes.Stun || instance.Type == StatusTypes.Silence)
-                    {
-                        entity.CastTime = 0;
-                    }
-                    else if (instance.Type == StatusTypes.Shield)
-                    {
-                        instance.Shield = status.VitalShields;
-                    }
-                }
-
-                entity.SortStatuses();
-
-                if (Interface.Interface.GameUi != null)
-                {
-                    //If its you or your target, update the entity box.
-                    if (en.Id == Globals.Me.Id && Interface.Interface.GameUi.PlayerBox != null)
-                    {
-                        Interface.Interface.GameUi.PlayerBox.UpdateStatuses = true;
-                    }
-                    else if (en.Id == Globals.Me.TargetIndex && Globals.Me.TargetBox != null)
-                    {
-                        Globals.Me.TargetBox.UpdateStatuses = true;
-                    }
-                }
-            }
-        }
-
         //EntityVitalsPacket
-        public void HandlePacket(IPacketSender packetSender, EntityVitalsPacket packet)
+        private static void HandlePacket(EntityVitalsPacket packet)
         {
             var id = packet.Id;
             var type = packet.Type;
@@ -827,11 +599,7 @@ namespace Intersect.Client.Networking
 
                 en.Status.Add(instance);
 
-                if (instance.Type == StatusTypes.Stun || instance.Type == StatusTypes.Silence)
-                {
-                    en.CastTime = 0;
-                }
-                else if (instance.Type == StatusTypes.Shield)
+                if (instance.Type == StatusTypes.Shield)
                 {
                     instance.Shield = status.VitalShields;
                 }
@@ -854,7 +622,7 @@ namespace Intersect.Client.Networking
         }
 
         //EntityStatsPacket
-        public void HandlePacket(IPacketSender packetSender, EntityStatsPacket packet)
+        private static void HandlePacket(EntityStatsPacket packet)
         {
             var id = packet.Id;
             var type = packet.Type;
@@ -894,7 +662,7 @@ namespace Intersect.Client.Networking
         }
 
         //EntityDirectionPacket
-        public void HandlePacket(IPacketSender packetSender, EntityDirectionPacket packet)
+        private static void HandlePacket(EntityDirectionPacket packet)
         {
             var id = packet.Id;
             var type = packet.Type;
@@ -934,7 +702,7 @@ namespace Intersect.Client.Networking
         }
 
         //EntityAttackPacket
-        public void HandlePacket(IPacketSender packetSender, EntityAttackPacket packet)
+        private static void HandlePacket(EntityAttackPacket packet)
         {
             var id = packet.Id;
             var type = packet.Type;
@@ -980,12 +748,12 @@ namespace Intersect.Client.Networking
         }
 
         //EntityDiePacket
-        public void HandlePacket(IPacketSender packetSender, EntityDiePacket packet)
+        private static void HandlePacket(EntityDiePacket packet)
         {
             var id = packet.Id;
             var type = packet.Type;
             var mapId = packet.MapId;
-            
+
             Entity en = null;
             if (type < EntityTypes.Event)
             {
@@ -993,7 +761,7 @@ namespace Intersect.Client.Networking
                 {
                     return;
                 }
-                
+
                 en = Globals.Entities[id];
             }
             else
@@ -1021,7 +789,7 @@ namespace Intersect.Client.Networking
         }
 
         //EventDialogPacket
-        public void HandlePacket(IPacketSender packetSender, EventDialogPacket packet)
+        private static void HandlePacket(EventDialogPacket packet)
         {
             var ed = new Dialog();
             ed.Prompt = packet.Prompt;
@@ -1039,7 +807,7 @@ namespace Intersect.Client.Networking
         }
 
         //InputVariablePacket
-        public void HandlePacket(IPacketSender packetSender, InputVariablePacket packet)
+        private static void HandlePacket(InputVariablePacket packet)
         {
             var type = InputBox.InputType.NumericInput;
             switch (packet.Type)
@@ -1066,7 +834,7 @@ namespace Intersect.Client.Networking
         }
 
         //ErrorMessagePacket
-        public void HandlePacket(IPacketSender packetSender, ErrorMessagePacket packet)
+        private static void HandlePacket(ErrorMessagePacket packet)
         {
             Fade.FadeIn();
             Globals.WaitingOnServer = false;
@@ -1075,7 +843,7 @@ namespace Intersect.Client.Networking
         }
 
         //MapItemsPacket
-        public void HandlePacket(IPacketSender packetSender, MapItemsPacket packet)
+        private static void HandlePacket(MapItemsPacket packet)
         {
             var map = MapInstance.Get(packet.MapId);
             if (map == null)
@@ -1084,98 +852,72 @@ namespace Intersect.Client.Networking
             }
 
             map.MapItems.Clear();
-            foreach(var item in packet.Items)
+            for (var i = 0; i < packet.Items.Length; i++)
             {
-                var mapItem = new MapItemInstance(item.TileIndex,item.Id, item.ItemId, item.BagId, item.Quantity, item.StatBuffs);
-                
-                if (!map.MapItems.ContainsKey(mapItem.TileIndex))
+                if (packet.Items[i] != null)
                 {
-                    map.MapItems.Add(mapItem.TileIndex, new List<MapItemInstance>());
+                    map.MapItems.Add(i, new MapItemInstance(packet.Items[i]));
                 }
-
-                map.MapItems[mapItem.TileIndex].Add(mapItem);
             }
         }
 
         //MapItemUpdatePacket
-        public void HandlePacket(IPacketSender packetSender, MapItemUpdatePacket packet)
+        private static void HandlePacket(MapItemUpdatePacket packet)
         {
             var map = MapInstance.Get(packet.MapId);
-            if (map == null)
+            if (map != null)
             {
-                return;
-            }
-
-            // Are we deleting this item?
-            if (packet.ItemId == Guid.Empty)
-            {
-                // Find our item based on our unique Id and remove it.
-                foreach(var location in map.MapItems.Keys)
+                if (packet.ItemData == null)
                 {
-                    var tempItem = map.MapItems[location].Where(item => item.UniqueId == packet.Id).SingleOrDefault();
-                    if (tempItem != null)
-                    {
-                        map.MapItems[location].Remove(tempItem);
-                    }
-                }
-            }
-            else
-            {
-                if (!map.MapItems.ContainsKey(packet.TileIndex))
-                {
-                    map.MapItems.Add(packet.TileIndex, new List<MapItemInstance>());
-                }
-
-                // Check if the item already exists, if it does replace it. Otherwise just add it.
-                var mapItem = new MapItemInstance(packet.TileIndex, packet.Id, packet.ItemId, packet.BagId, packet.Quantity, packet.StatBuffs);
-                if (map.MapItems[packet.TileIndex].Any(item => item.UniqueId == mapItem.UniqueId))
-                {
-                    for (var index = 0; index < map.MapItems[packet.TileIndex].Count; index++)
-                    {
-                        if (map.MapItems[packet.TileIndex][index].UniqueId == mapItem.UniqueId)
-                        {
-                            map.MapItems[packet.TileIndex][index] = mapItem;
-                        }
-                    }
+                    map.MapItems.Remove(packet.ItemIndex);
                 }
                 else
                 {
-                    // Reverse the array again to match server, add item.. then  reverse again to get the right render order.
-                    map.MapItems[packet.TileIndex].Add(mapItem);
-                } 
+                    if (!map.MapItems.ContainsKey(packet.ItemIndex))
+                    {
+                        map.MapItems.Add(packet.ItemIndex, new MapItemInstance(packet.ItemData));
+                    }
+                    else
+                    {
+                        map.MapItems[packet.ItemIndex] = new MapItemInstance(packet.ItemData);
+                    }
+                }
             }
         }
 
         //InventoryPacket
-        public void HandlePacket(IPacketSender packetSender, InventoryPacket packet)
+        private static void HandlePacket(InventoryPacket packet)
         {
             foreach (var inv in packet.Slots)
             {
-                HandlePacket(inv);
+                HandlePacket((dynamic) inv);
             }
         }
 
         //InventoryUpdatePacket
-        public void HandlePacket(IPacketSender packetSender, InventoryUpdatePacket packet)
+        private static void HandlePacket(InventoryUpdatePacket packet)
         {
             if (Globals.Me != null)
             {
                 Globals.Me.Inventory[packet.Slot].Load(packet.ItemId, packet.Quantity, packet.BagId, packet.StatBuffs);
-                Globals.Me.InventoryUpdatedDelegate?.Invoke();
+                if (Globals.Me.InventoryUpdatedDelegate != null)
+                {
+                    Globals.Me.InventoryUpdatedDelegate();
+                }
             }
         }
 
         //SpellsPacket
-        public void HandlePacket(IPacketSender packetSender, SpellsPacket packet)
+        private static void HandlePacket(SpellsPacket packet)
         {
             foreach (var spl in packet.Slots)
             {
-                HandlePacket(spl);
+                HandlePacket((dynamic) spl);
             }
         }
 
         //SpellUpdatePacket
-        public void HandlePacket(IPacketSender packetSender, SpellUpdatePacket packet)
+        private static void HandlePacket(SpellUpdatePacket packet)
         {
             if (Globals.Me != null)
             {
@@ -1184,7 +926,7 @@ namespace Intersect.Client.Networking
         }
 
         //EquipmentPacket
-        public void HandlePacket(IPacketSender packetSender, EquipmentPacket packet)
+        private static void HandlePacket(EquipmentPacket packet)
         {
             var entityId = packet.EntityId;
             if (Globals.Entities.ContainsKey(entityId))
@@ -1205,7 +947,7 @@ namespace Intersect.Client.Networking
         }
 
         //StatPointsPacket
-        public void HandlePacket(IPacketSender packetSender, StatPointsPacket packet)
+        private static void HandlePacket(StatPointsPacket packet)
         {
             if (Globals.Me != null)
             {
@@ -1214,7 +956,7 @@ namespace Intersect.Client.Networking
         }
 
         //HotbarPacket
-        public void HandlePacket(IPacketSender packetSender, HotbarPacket packet)
+        private static void HandlePacket(HotbarPacket packet)
         {
             for (var i = 0; i < Options.MaxHotbar; i++)
             {
@@ -1238,20 +980,20 @@ namespace Intersect.Client.Networking
         }
 
         //CharacterCreationPacket
-        public void HandlePacket(IPacketSender packetSender, CharacterCreationPacket packet)
+        private static void HandlePacket(CharacterCreationPacket packet)
         {
             Globals.WaitingOnServer = false;
             Interface.Interface.MenuUi.MainMenu.NotifyOpenCharacterCreation();
         }
 
         //AdminPanelPacket
-        public void HandlePacket(IPacketSender packetSender, AdminPanelPacket packet)
+        private static void HandlePacket(AdminPanelPacket packet)
         {
             Interface.Interface.GameUi.NotifyOpenAdminWindow();
         }
 
         //SpellCastPacket
-        public void HandlePacket(IPacketSender packetSender, SpellCastPacket packet)
+        private static void HandlePacket(SpellCastPacket packet)
         {
             var entityId = packet.EntityId;
             var spellId = packet.SpellId;
@@ -1263,7 +1005,7 @@ namespace Intersect.Client.Networking
         }
 
         //SpellCooldownPacket
-        public void HandlePacket(IPacketSender packetSender, SpellCooldownPacket packet)
+        private static void HandlePacket(SpellCooldownPacket packet)
         {
             foreach (var cd in packet.SpellCds)
             {
@@ -1280,7 +1022,7 @@ namespace Intersect.Client.Networking
         }
 
         //ItemCooldownPacket
-        public void HandlePacket(IPacketSender packetSender, ItemCooldownPacket packet)
+        private static void HandlePacket(ItemCooldownPacket packet)
         {
             foreach (var cd in packet.ItemCds)
             {
@@ -1297,7 +1039,7 @@ namespace Intersect.Client.Networking
         }
 
         //ExperiencePacket
-        public void HandlePacket(IPacketSender packetSender, ExperiencePacket packet)
+        private static void HandlePacket(ExperiencePacket packet)
         {
             if (Globals.Me != null)
             {
@@ -1307,7 +1049,7 @@ namespace Intersect.Client.Networking
         }
 
         //ProjectileDeadPacket
-        public void HandlePacket(IPacketSender packetSender, ProjectileDeadPacket packet)
+        private static void HandlePacket(ProjectileDeadPacket packet)
         {
             var entityId = packet.ProjectileId;
             if (Globals.Entities.ContainsKey(entityId) && Globals.Entities[entityId].GetType() == typeof(Projectile))
@@ -1317,7 +1059,7 @@ namespace Intersect.Client.Networking
         }
 
         //PlayAnimationPacket
-        public void HandlePacket(IPacketSender packetSender, PlayAnimationPacket packet)
+        private static void HandlePacket(PlayAnimationPacket packet)
         {
             var mapId = packet.MapId;
             var animId = packet.AnimationId;
@@ -1341,7 +1083,7 @@ namespace Intersect.Client.Networking
                         if (animBase != null)
                         {
                             var animInstance = new Animation(
-                                animBase, false, packet.Direction != -1, -1, Globals.Entities[entityId]
+                                animBase, false, packet.Direction == -1 ? false : true, -1, Globals.Entities[entityId]
                             );
 
                             if (packet.Direction > -1)
@@ -1367,7 +1109,7 @@ namespace Intersect.Client.Networking
                             if (animBase != null)
                             {
                                 var animInstance = new Animation(
-                                    animBase, false, packet.Direction == -1, -1,
+                                    animBase, false, packet.Direction == -1 ? true : false, -1,
                                     map.LocalEntities[entityId]
                                 );
 
@@ -1385,7 +1127,7 @@ namespace Intersect.Client.Networking
         }
 
         //HoldPlayerPacket
-        public void HandlePacket(IPacketSender packetSender, HoldPlayerPacket packet)
+        private static void HandlePacket(HoldPlayerPacket packet)
         {
             var eventId = packet.EventId;
             var mapId = packet.MapId;
@@ -1406,31 +1148,31 @@ namespace Intersect.Client.Networking
         }
 
         //PlayMusicPacket
-        public void HandlePacket(IPacketSender packetSender, PlayMusicPacket packet)
+        private static void HandlePacket(PlayMusicPacket packet)
         {
             Audio.PlayMusic(packet.BGM, 1f, 1f, true);
         }
 
         //StopMusicPacket
-        public void HandlePacket(IPacketSender packetSender, StopMusicPacket packet)
+        private static void HandlePacket(StopMusicPacket packet)
         {
             Audio.StopMusic(3f);
         }
 
         //PlaySoundPacket
-        public void HandlePacket(IPacketSender packetSender, PlaySoundPacket packet)
+        private static void HandlePacket(PlaySoundPacket packet)
         {
             Audio.AddGameSound(packet.Sound, false);
         }
 
         //StopSoundsPacket
-        public void HandlePacket(IPacketSender packetSender, StopSoundsPacket packet)
+        private static void HandlePacket(StopSoundsPacket packet)
         {
             Audio.StopAllSounds();
         }
 
         //ShowPicturePacket
-        public void HandlePacket(IPacketSender packetSender, ShowPicturePacket packet)
+        private static void HandlePacket(ShowPicturePacket packet)
         {
             Globals.Picture = packet.Picture;
             Globals.PictureSize = packet.Size;
@@ -1438,13 +1180,13 @@ namespace Intersect.Client.Networking
         }
 
         //HidePicturePacket
-        public void HandlePacket(IPacketSender packetSender, HidePicturePacket packet)
+        private static void HandlePacket(HidePicturePacket packet)
         {
             Globals.Picture = null;
         }
 
         //ShopPacket
-        public void HandlePacket(IPacketSender packetSender, ShopPacket packet)
+        private static void HandlePacket(ShopPacket packet)
         {
             if (Interface.Interface.GameUi == null)
             {
@@ -1470,7 +1212,7 @@ namespace Intersect.Client.Networking
         }
 
         //CraftingTablePacket
-        public void HandlePacket(IPacketSender packetSender, CraftingTablePacket packet)
+        private static void HandlePacket(CraftingTablePacket packet)
         {
             if (!packet.Close)
             {
@@ -1485,7 +1227,7 @@ namespace Intersect.Client.Networking
         }
 
         //BankPacket
-        public void HandlePacket(IPacketSender packetSender, BankPacket packet)
+        private static void HandlePacket(BankPacket packet)
         {
             if (!packet.Close)
             {
@@ -1498,7 +1240,7 @@ namespace Intersect.Client.Networking
         }
 
         //BankUpdatePacket
-        public void HandlePacket(IPacketSender packetSender, BankUpdatePacket packet)
+        private static void HandlePacket(BankUpdatePacket packet)
         {
             var slot = packet.Slot;
             if (packet.ItemId != Guid.Empty)
@@ -1513,7 +1255,7 @@ namespace Intersect.Client.Networking
         }
 
         //GameObjectPacket
-        public void HandlePacket(IPacketSender packetSender, GameObjectPacket packet)
+        private static void HandlePacket(GameObjectPacket packet)
         {
             var type = packet.Type;
             var id = packet.Id;
@@ -1561,7 +1303,7 @@ namespace Intersect.Client.Networking
         }
 
         //EntityDashPacket
-        public void HandlePacket(IPacketSender packetSender, EntityDashPacket packet)
+        private static void HandlePacket(EntityDashPacket packet)
         {
             if (Globals.Entities.ContainsKey(packet.EntityId))
             {
@@ -1576,7 +1318,7 @@ namespace Intersect.Client.Networking
         }
 
         //MapGridPacket
-        public void HandlePacket(IPacketSender packetSender, MapGridPacket packet)
+        private static void HandlePacket(MapGridPacket packet)
         {
             Globals.MapGridWidth = packet.Grid.GetLength(0);
             Globals.MapGridHeight = packet.Grid.GetLength(1);
@@ -1621,7 +1363,7 @@ namespace Intersect.Client.Networking
         }
 
         //TimePacket
-        public void HandlePacket(IPacketSender packetSender, TimePacket packet)
+        private static void HandlePacket(TimePacket packet)
         {
             Time.LoadTime(
                 packet.Time, Color.FromArgb(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B), packet.Rate
@@ -1629,7 +1371,7 @@ namespace Intersect.Client.Networking
         }
 
         //PartyPacket
-        public void HandlePacket(IPacketSender packetSender, PartyPacket packet)
+        private static void HandlePacket(PartyPacket packet)
         {
             if (Globals.Me == null || Globals.Me.Party == null)
             {
@@ -1645,7 +1387,7 @@ namespace Intersect.Client.Networking
         }
 
         //PartyUpdatePacket
-        public void HandlePacket(IPacketSender packetSender, PartyUpdatePacket packet)
+        private static void HandlePacket(PartyUpdatePacket packet)
         {
             var index = packet.MemberIndex;
             if (index < Globals.Me.Party.Count)
@@ -1656,7 +1398,7 @@ namespace Intersect.Client.Networking
         }
 
         //PartyInvitePacket
-        public void HandlePacket(IPacketSender packetSender, PartyInvitePacket packet)
+        private static void HandlePacket(PartyInvitePacket packet)
         {
             var iBox = new InputBox(
                 Strings.Parties.partyinvite, Strings.Parties.inviteprompt.ToString(packet.LeaderName), true,
@@ -1665,7 +1407,7 @@ namespace Intersect.Client.Networking
         }
 
         //ChatBubblePacket
-        public void HandlePacket(IPacketSender packetSender, ChatBubblePacket packet)
+        private static void HandlePacket(ChatBubblePacket packet)
         {
             var id = packet.EntityId;
             var type = packet.Type;
@@ -1705,7 +1447,7 @@ namespace Intersect.Client.Networking
         }
 
         //QuestOfferPacket
-        public void HandlePacket(IPacketSender packetSender, QuestOfferPacket packet)
+        private static void HandlePacket(QuestOfferPacket packet)
         {
             if (!Globals.QuestOffers.Contains(packet.QuestId))
             {
@@ -1714,7 +1456,7 @@ namespace Intersect.Client.Networking
         }
 
         //QuestProgressPacket
-        public void HandlePacket(IPacketSender packetSender, QuestProgressPacket packet)
+        private static void HandlePacket(QuestProgressPacket packet)
         {
             if (Globals.Me != null)
             {
@@ -1748,7 +1490,7 @@ namespace Intersect.Client.Networking
         }
 
         //TradePacket
-        public void HandlePacket(IPacketSender packetSender, TradePacket packet)
+        private static void HandlePacket(TradePacket packet)
         {
             if (!string.IsNullOrEmpty(packet.TradePartner))
             {
@@ -1772,7 +1514,7 @@ namespace Intersect.Client.Networking
         }
 
         //TradeUpdatePacket
-        public void HandlePacket(IPacketSender packetSender, TradeUpdatePacket packet)
+        private static void HandlePacket(TradeUpdatePacket packet)
         {
             var side = 0;
 
@@ -1794,7 +1536,7 @@ namespace Intersect.Client.Networking
         }
 
         //TradeRequestPacket
-        public void HandlePacket(IPacketSender packetSender, TradeRequestPacket packet)
+        private static void HandlePacket(TradeRequestPacket packet)
         {
             var iBox = new InputBox(
                 Strings.Trading.traderequest, Strings.Trading.requestprompt.ToString(packet.PartnerName), true,
@@ -1804,7 +1546,7 @@ namespace Intersect.Client.Networking
         }
 
         //NpcAggressionPacket
-        public void HandlePacket(IPacketSender packetSender, NpcAggressionPacket packet)
+        private static void HandlePacket(NpcAggressionPacket packet)
         {
             if (Globals.Entities.ContainsKey(packet.EntityId))
             {
@@ -1813,7 +1555,7 @@ namespace Intersect.Client.Networking
         }
 
         //PlayerDeathPacket
-        public void HandlePacket(IPacketSender packetSender, PlayerDeathPacket packet)
+        private static void HandlePacket(PlayerDeathPacket packet)
         {
             if (Globals.Entities.ContainsKey(packet.PlayerId))
             {
@@ -1825,7 +1567,7 @@ namespace Intersect.Client.Networking
         }
 
         //EntityZDimensionPacket
-        public void HandlePacket(IPacketSender packetSender, EntityZDimensionPacket packet)
+        private static void HandlePacket(EntityZDimensionPacket packet)
         {
             if (Globals.Entities.ContainsKey(packet.EntityId))
             {
@@ -1834,7 +1576,7 @@ namespace Intersect.Client.Networking
         }
 
         //BagPacket
-        public void HandlePacket(IPacketSender packetSender, BagPacket packet)
+        private static void HandlePacket(BagPacket packet)
         {
             if (!packet.Close)
             {
@@ -1848,7 +1590,7 @@ namespace Intersect.Client.Networking
         }
 
         //BagUpdatePacket
-        public void HandlePacket(IPacketSender packetSender, BagUpdatePacket packet)
+        private static void HandlePacket(BagUpdatePacket packet)
         {
             if (packet.ItemId == Guid.Empty)
             {
@@ -1862,13 +1604,13 @@ namespace Intersect.Client.Networking
         }
 
         //MoveRoutePacket
-        public void HandlePacket(IPacketSender packetSender, MoveRoutePacket packet)
+        private static void HandlePacket(MoveRoutePacket packet)
         {
             Globals.MoveRouteActive = packet.Active;
         }
 
         //FriendsPacket
-        public void HandlePacket(IPacketSender packetSender, FriendsPacket packet)
+        private static void HandlePacket(FriendsPacket packet)
         {
             Globals.Me.Friends.Clear();
 
@@ -1899,7 +1641,7 @@ namespace Intersect.Client.Networking
         }
 
         //FriendRequestPacket
-        public void HandlePacket(IPacketSender packetSender, FriendRequestPacket packet)
+        private static void HandlePacket(FriendRequestPacket packet)
         {
             var iBox = new InputBox(
                 Strings.Friends.request, Strings.Friends.requestprompt.ToString(packet.FriendName), true,
@@ -1909,7 +1651,7 @@ namespace Intersect.Client.Networking
         }
 
         //CharactersPacket
-        public void HandlePacket(IPacketSender packetSender, CharactersPacket packet)
+        private static void HandlePacket(CharactersPacket packet)
         {
             var characters = new List<Character>();
 
@@ -1930,7 +1672,7 @@ namespace Intersect.Client.Networking
         }
 
         //PasswordResetResultPacket
-        public void HandlePacket(IPacketSender packetSender, PasswordResetResultPacket packet)
+        private static void HandlePacket(PasswordResetResultPacket packet)
         {
             if (packet.Succeeded)
             {
@@ -1953,29 +1695,19 @@ namespace Intersect.Client.Networking
         }
 
         //TargetOverridePacket
-        public void HandlePacket(IPacketSender packetSender, TargetOverridePacket packet)
+        private static void HandlePacket(TargetOverridePacket packet)
         {
             if (Globals.Entities.ContainsKey(packet.TargetId))
-            { 
-                Globals.Me.TryTarget(Globals.Entities[packet.TargetId], true);
+            {
+                Globals.Me.TargetIndex = packet.TargetId;
             }
         }
 
         //EnteringGamePacket
-        public void HandlePacket(IPacketSender packetSender, EnteringGamePacket packet)
+        private static void HandlePacket(EnteringGamePacket packet)
         {
             //Fade out, we're finally loading the game world!
             Fade.FadeOut();
-        }
-
-        //CancelCastPacket
-        public void HandlePacket(IPacketSender packetSender, CancelCastPacket packet)
-        {
-            if (Globals.Entities.ContainsKey(packet.EntityId))
-            {
-                Globals.Entities[packet.EntityId].CastTime = 0;
-                Globals.Entities[packet.EntityId].SpellCast = Guid.Empty;
-            }
         }
 
     }

@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Text;
-using Intersect.Compression;
+
 using Intersect.Editor.Classes.Maps;
 using Intersect.Editor.Core;
 using Intersect.Editor.Entities;
@@ -11,7 +10,6 @@ using Intersect.Editor.General;
 using Intersect.GameObjects;
 using Intersect.GameObjects.Events;
 using Intersect.GameObjects.Maps;
-using Newtonsoft.Json;
 
 namespace Intersect.Editor.Maps
 {
@@ -92,14 +90,7 @@ namespace Intersect.Editor.Maps
         {
             lock (MapLock)
             {
-                Layers = JsonConvert.DeserializeObject<Dictionary<string, Tile[,]>>(LZ4.UnPickleString(packet), mJsonSerializerSettings);
-                foreach (var layer in Options.Instance.MapOpts.Layers.All)
-                {
-                    if (!Layers.ContainsKey(layer))
-                    {
-                        Layers.Add(layer, new Tile[Options.MapWidth, Options.MapHeight]);
-                    }
-                }
+                Layers = mCeras.Decompress<TileArray[]>(packet);
             }
 
             InitAutotiles();
@@ -126,7 +117,7 @@ namespace Intersect.Editor.Maps
 
         public byte[] GenerateTileData()
         {
-            return LZ4.PickleString(JsonConvert.SerializeObject(Layers, Formatting.None, mJsonSerializerSettings));
+            return mCeras.Compress(Layers);
         }
 
         public bool Changed()
@@ -167,7 +158,7 @@ namespace Intersect.Editor.Maps
 
         public override byte[] GetAttributeData()
         {
-            return LZ4.PickleString(JsonConvert.SerializeObject(Attributes, Formatting.None, mJsonSerializerSettings));
+            return mCeras.Compress(Attributes);
         }
 
         public void Update()

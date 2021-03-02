@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Web.UI;
+
 using Intersect.Enums;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
@@ -19,6 +19,8 @@ namespace Intersect.Server.Entities
 
         // Resource Number
         public ResourceBase Base;
+
+        public bool IsDead;
 
         //Respawn
         public long RespawnTime = 0;
@@ -42,32 +44,24 @@ namespace Intersect.Server.Entities
 
         public void Destroy(int dropitems = 0, Entity killer = null)
         {
-            lock (EntityLock)
-            {
-                Die(dropitems, killer);
-            }
-            
+            Die(dropitems, killer);
             PacketSender.SendEntityDie(this);
             PacketSender.SendEntityLeave(this);
         }
 
         public override void Die(int dropitems = 100, Entity killer = null)
         {
-            lock (EntityLock)
-            {
-                base.Die(0, killer);
-            }
-            
+            base.Die(0, killer);
             Sprite = Base.Exhausted.Graphic;
             Passable = Base.WalkableAfter;
-            Dead = true;
+            IsDead = true;
             if (dropitems > 0)
             {
                 SpawnResourceItems(killer);
                 if (Base.AnimationId != Guid.Empty)
                 {
                     PacketSender.SendAnimationToProximity(
-                        Base.AnimationId, -1, Guid.Empty, MapId, (byte)X, (byte)Y, (int)Directions.Up
+                        Base.AnimationId, -1, Guid.Empty, MapId, (byte) X, (byte) Y, (int) Directions.Up
                     );
                 }
             }
@@ -102,9 +96,10 @@ namespace Intersect.Server.Entities
                 }
             }
 
-            Dead = false;
+            IsDead = false;
             PacketSender.SendEntityDataToProximity(this);
             PacketSender.SendEntityPositionToAll(this);
+            PacketSender.SendEntityVitals(this);
         }
 
         public void SpawnResourceItems(Entity killer)
@@ -177,13 +172,13 @@ namespace Intersect.Server.Entities
         public override void ProcessRegen()
         {
             //For now give npcs/resources 10% health back every regen tick... in the future we should put per-npc and per-resource regen settings into their respective editors.
-            if (!IsDead())
+            if (!IsDead)
             {
                 if (Base == null)
                 {
                     return;
                 }
-                
+
                 var vital = Vitals.Health;
 
                 var vitalId = (int) vital;
@@ -202,7 +197,7 @@ namespace Intersect.Server.Entities
 
         public override bool IsPassable()
         {
-            return IsDead() & Base.WalkableAfter || !IsDead() && Base.WalkableBefore;
+            return IsDead & Base.WalkableAfter || !IsDead && Base.WalkableBefore;
         }
 
         public override EntityPacket EntityPacket(EntityPacket packet = null, Player forPlayer = null)
@@ -216,7 +211,7 @@ namespace Intersect.Server.Entities
 
             var pkt = (ResourceEntityPacket) packet;
             pkt.ResourceId = Base.Id;
-            pkt.IsDead = IsDead();
+            pkt.IsDead = IsDead;
 
             return pkt;
         }
@@ -225,6 +220,7 @@ namespace Intersect.Server.Entities
         {
             return EntityTypes.Resource;
         }
+
     }
 
 }

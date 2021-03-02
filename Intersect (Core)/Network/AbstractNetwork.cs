@@ -6,24 +6,22 @@ using System.Linq;
 
 using Intersect.Logging;
 using Intersect.Memory;
-using Intersect.Plugins.Interfaces;
+
+using JetBrains.Annotations;
 
 namespace Intersect.Network
 {
+
     public abstract class AbstractNetwork : INetwork
     {
-        private bool mDisposed;
-
-        private readonly object mDisposeLock;
 
         private readonly List<INetworkLayerInterface> mNetworkLayerInterfaces;
 
-        protected AbstractNetwork(INetworkHelper networkHelper, NetworkConfiguration configuration)
+        private bool mDisposed;
+
+        protected AbstractNetwork([NotNull] NetworkConfiguration configuration)
         {
             mDisposed = false;
-            mDisposeLock = new object();
-
-            Helper = networkHelper ?? throw new ArgumentNullException(nameof(networkHelper));
 
             mNetworkLayerInterfaces = new List<INetworkLayerInterface>();
 
@@ -37,12 +35,13 @@ namespace Intersect.Network
             Configuration = configuration;
         }
 
-        public INetworkHelper Helper { get; }
-
+        [NotNull]
         public ICollection<IConnection> Connections => ConnectionLookup.Values;
 
+        [NotNull]
         public IDictionary<Guid, IConnection> ConnectionLookup { get; }
 
+        [NotNull]
         public HandlePacket Handler { get; set; }
 
         public ShouldProcessPacket PreProcessHandler { get; set; }
@@ -53,7 +52,7 @@ namespace Intersect.Network
 
         public Guid Guid { get; protected set; }
 
-        public bool AddConnection(IConnection connection)
+        public bool AddConnection([NotNull] IConnection connection)
         {
             if (ConnectionLookup.ContainsKey(connection.Guid))
             {
@@ -65,12 +64,14 @@ namespace Intersect.Network
             return true;
         }
 
-        public bool RemoveConnection(IConnection connection) =>
-            !connection.IsConnected && ConnectionLookup.Remove(connection.Guid);
+        public bool RemoveConnection([NotNull] IConnection connection)
+        {
+            return !connection.IsConnected && ConnectionLookup.Remove(connection.Guid);
+        }
 
         public void Dispose()
         {
-            lock (mDisposeLock)
+            lock (this)
             {
                 if (mDisposed)
                 {
@@ -90,17 +91,25 @@ namespace Intersect.Network
             ConnectionLookup.Clear();
         }
 
-        public bool Disconnect(string message = "") => Disconnect(Connections, message);
+        public bool Disconnect(string message = "")
+        {
+            return Disconnect(Connections, message);
+        }
 
-        public bool Disconnect(Guid guid, string message = "") => Disconnect(FindConnection(guid), message);
+        public bool Disconnect(Guid guid, string message = "")
+        {
+            return Disconnect(FindConnection(guid), message);
+        }
 
         public bool Disconnect(IConnection connection, string message = "")
         {
             return Disconnect(new[] {connection}, message);
         }
 
-        public bool Disconnect(ICollection<Guid> guids, string message = "") =>
-            Disconnect(FindConnections(guids), message);
+        public bool Disconnect(ICollection<Guid> guids, string message = "")
+        {
+            return Disconnect(FindConnections(guids), message);
+        }
 
         public bool Disconnect(ICollection<IConnection> connections, string message = "")
         {
@@ -111,20 +120,23 @@ namespace Intersect.Network
             return true;
         }
 
-        public abstract bool Send(IPacket packet, TransmissionMode mode = TransmissionMode.All);
+        public abstract bool Send(IPacket packet);
 
-        public bool Send(Guid guid, IPacket packet, TransmissionMode mode = TransmissionMode.All)
+        public bool Send(Guid guid, IPacket packet)
         {
             var connection = FindConnection(guid);
 
-            return connection != null && Send(connection, packet, mode);
+            return connection != null && Send(connection, packet);
         }
 
-        public abstract bool Send(IConnection connection, IPacket packet, TransmissionMode mode = TransmissionMode.All);
+        public abstract bool Send(IConnection connection, IPacket packet);
 
-        public bool Send(ICollection<Guid> guids, IPacket packet, TransmissionMode mode = TransmissionMode.All) => Send(FindConnections(guids), packet, mode);
+        public bool Send(ICollection<Guid> guids, IPacket packet)
+        {
+            return Send(FindConnections(guids), packet);
+        }
 
-        public abstract bool Send(ICollection<IConnection> connections, IPacket packet, TransmissionMode mode = TransmissionMode.All);
+        public abstract bool Send(ICollection<IConnection> connections, IPacket packet);
 
         public IConnection FindConnection(Guid guid)
         {
@@ -138,20 +150,27 @@ namespace Intersect.Network
             return null;
         }
 
-        public TConnection FindConnection<TConnection>(Guid guid) where TConnection : class, IConnection =>
-            FindConnection(guid) as TConnection;
+        public TConnection FindConnection<TConnection>(Guid guid) where TConnection : class, IConnection
+        {
+            return FindConnection(guid) as TConnection;
+        }
 
-        public TConnection FindConnection<TConnection>(Func<TConnection, bool> selector)
-            where TConnection : class, IConnection =>
-            FindConnections<TConnection>().FirstOrDefault(selector);
+        public TConnection FindConnection<TConnection>([NotNull] Func<TConnection, bool> selector)
+            where TConnection : class, IConnection
+        {
+            return FindConnections<TConnection>().FirstOrDefault(selector);
+        }
 
-        public ICollection<IConnection> FindConnections(ICollection<Guid> guids)
+        public ICollection<IConnection> FindConnections([NotNull] ICollection<Guid> guids)
         {
             return guids.Select(FindConnection).Where(connection => connection != null).ToList();
         }
 
-        public ICollection<TConnection> FindConnections<TConnection>() where TConnection : class, IConnection =>
-            Connections.OfType<TConnection>().ToList();
+        [NotNull]
+        public ICollection<TConnection> FindConnections<TConnection>() where TConnection : class, IConnection
+        {
+            return Connections.OfType<TConnection>().ToList();
+        }
 
         protected void AddNetworkLayerInterface(INetworkLayerInterface networkLayerInterface)
         {
@@ -178,7 +197,7 @@ namespace Intersect.Network
 
             if (!sender.TryGetInboundBuffer(out var buffer, out var connection))
             {
-                //Log.Error("Failed to obtain packet when told a packet was available.");
+                Log.Error("Failed to obtain packet when told a packet was available.");
 
                 return;
             }
@@ -222,12 +241,13 @@ namespace Intersect.Network
                 }
             }
 
-            // Incorporate Ceras
+            //Incorperate Ceras
             var data = buffer.ToBytes();
 
-            // Get Packet From Data using Ceras
-            var sw = Stopwatch.StartNew();
-            var packet = (IPacket) MessagePacker.Instance.Deserialize(data);
+            //Get Packet From Data using Ceras
+            var sw = new Stopwatch();
+            sw.Start();
+            var packet = (IPacket) connection.Ceras.Deserialize(data);
             if (sw.ElapsedMilliseconds > 10)
             {
                 Debug.WriteLine(
@@ -235,10 +255,10 @@ namespace Intersect.Network
                 );
             }
 
-            // Handle any packet identification errors
+            //Handle any packet identification errors
 
-            // Pass packet to handler.
-            Handler(connection, packet);
+            //Pass packet to handler.
+            Handler.Invoke(connection, packet);
         }
 
         protected abstract IDictionary<TKey, TValue> CreateDictionaryLegacy<TKey, TValue>();
@@ -274,5 +294,7 @@ namespace Intersect.Network
         {
             mNetworkLayerInterfaces?.ForEach(networkLayerInterface => networkLayerInterface?.Stop(reason));
         }
+
     }
+
 }

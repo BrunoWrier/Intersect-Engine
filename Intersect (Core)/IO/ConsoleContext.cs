@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
 
+using JetBrains.Annotations;
+
 namespace Intersect.IO
 {
 
@@ -11,9 +13,9 @@ namespace Intersect.IO
 
         public static readonly int DefaultInputHistoryLength = 100;
 
-        private readonly List<string> mInputHistory;
+        [NotNull] private readonly List<string> mInputHistory;
 
-        private readonly object mLock;
+        [NotNull] private readonly object mLock;
 
         private bool mInputHistoryEnabled;
 
@@ -64,11 +66,13 @@ namespace Intersect.IO
 
         public bool InputHistoryFull => mInputHistoryLength > 0 && mInputHistoryLength <= mInputHistory.Count;
 
+        [NotNull]
         public ImmutableList<string> InputHistory =>
             mInputHistory.ToImmutableList() ?? throw new InvalidOperationException();
 
         public string WaitPrefix { get; set; }
 
+        [NotNull]
         private List<char> InputBuffer { get; }
 
         public void Check()
@@ -79,7 +83,7 @@ namespace Intersect.IO
             }
         }
 
-        public TResult Wait<TResult>(Action<string> write, Func<TResult> waitForResult)
+        public TResult Wait<TResult>([NotNull] Action<string> write, [NotNull] Func<TResult> waitForResult)
         {
             lock (mLock)
             {
@@ -98,7 +102,7 @@ namespace Intersect.IO
             }
         }
 
-        public void ResetWaitCursor(Action<string> write, int clearBufferLength = -1)
+        public void ResetWaitCursor([NotNull] Action<string> write, int clearBufferLength = -1)
         {
             if (!IsWaitingRead)
             {
@@ -122,7 +126,7 @@ namespace Intersect.IO
             Console.CursorTop = WaitCursorTop;
         }
 
-        public async Task ResetWaitCursorAsync(Func<string, Task> writeAsync, int clearBufferLength = -1)
+        public async Task ResetWaitCursorAsync([NotNull] Func<string, Task> writeAsync, int clearBufferLength = -1)
         {
             if (!IsWaitingRead)
             {
@@ -166,7 +170,7 @@ namespace Intersect.IO
             }
         }
 
-        public void WritePrefix(Action<string> write, int bufferPosition = -1)
+        public void WritePrefix([NotNull] Action<string> write, int bufferPosition = -1)
         {
             if (!IsWaitingRead)
             {
@@ -187,7 +191,7 @@ namespace Intersect.IO
             }
         }
 
-        public async Task WritePrefixAsync(Func<string, Task> writeAsync)
+        public async Task WritePrefixAsync([NotNull] Func<string, Task> writeAsync)
         {
             if (!IsWaitingRead)
             {
@@ -209,9 +213,9 @@ namespace Intersect.IO
         }
 
         public string BufferedReadLine(
-            Action<string> write,
-            Action writeLine,
-            Func<ConsoleKeyInfo> readKey
+            [NotNull] Action<string> write,
+            [NotNull] Action writeLine,
+            [NotNull] Func<ConsoleKeyInfo> readKey
         )
         {
             return Wait(
@@ -277,7 +281,7 @@ namespace Intersect.IO
                                 {
                                     InputBuffer.Clear();
                                     InputBuffer.AddRange(
-                                        mInputHistory[InputHistoryPosition]?.ToCharArray() ?? Array.Empty<char>()
+                                        mInputHistory[InputHistoryPosition]?.ToCharArray() ?? new char[0]
                                     );
                                 }
 
@@ -289,7 +293,7 @@ namespace Intersect.IO
                                 {
                                     InputBuffer.Clear();
                                     InputBuffer.AddRange(
-                                        mInputHistory[InputHistoryPosition]?.ToCharArray() ?? Array.Empty<char>()
+                                        mInputHistory[InputHistoryPosition]?.ToCharArray() ?? new char[0]
                                     );
                                 }
                                 else if (mInputHistory.Count == InputHistoryPosition && InputHistoryPosition > 0)

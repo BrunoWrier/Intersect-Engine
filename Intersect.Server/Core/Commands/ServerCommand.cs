@@ -2,6 +2,8 @@
 using Intersect.Server.Core.CommandParsing.Arguments;
 using Intersect.Server.Core.CommandParsing.Commands;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.Commands
 {
 
@@ -9,8 +11,8 @@ namespace Intersect.Server.Core.Commands
     {
 
         protected ServerCommand(
-            LocaleCommand localization,
-            params ICommandArgument[] arguments
+            [NotNull] LocaleCommand localization,
+            [NotNull] params ICommandArgument[] arguments
         ) : base(localization, arguments)
         {
         }

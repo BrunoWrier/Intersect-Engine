@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
+using Intersect.Logging;
+
 namespace Intersect.Utilities
 {
     /// <summary>

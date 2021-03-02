@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class QuestResponsePacket : IntersectPacket
+
+    public class QuestResponsePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public QuestResponsePacket()
-        {
-        }
 
         public QuestResponsePacket(Guid questId, bool accepting)
         {
@@ -17,10 +12,8 @@ namespace Intersect.Network.Packets.Client
             AcceptingQuest = accepting;
         }
 
-        [Key(0)]
         public Guid QuestId { get; set; }
 
-        [Key(1)]
         public bool AcceptingQuest { get; set; }
 
     }

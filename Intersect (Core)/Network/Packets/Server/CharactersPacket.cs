@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class CharactersPacket : IntersectPacket
+
+    public class CharactersPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public CharactersPacket()
-        {
-        }
 
         public CharactersPacket(CharacterPacket[] characters, bool freeSlot)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Server
             FreeSlot = freeSlot;
         }
 
-        [Key(0)]
         public CharacterPacket[] Characters { get; set; }
 
-        [Key(1)]
         public bool FreeSlot { get; set; }
 
     }

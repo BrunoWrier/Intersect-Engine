@@ -1,19 +1,13 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class SpellCooldownPacket : IntersectPacket
+
+    public class SpellCooldownPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public SpellCooldownPacket()
-        {
-        }
 
-
-        [Key(0)]
+        //Spell Id / Time Remaining (Since we cannot expect all clients to have perfect system times)
         public Dictionary<Guid, long> SpellCds;
 
         public SpellCooldownPacket(Dictionary<Guid, long> spellCds)

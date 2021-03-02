@@ -4,40 +4,44 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.CommandParsing.Arguments
 {
 
     public sealed class ArgumentValues : IEnumerable<object>
     {
 
-        private readonly IList<object> mValues;
+        [NotNull] private readonly IList<object> mValues;
 
-        public ArgumentValues(string argumentName, params object[] values) : this(
+        public ArgumentValues([NotNull] string argumentName, [CanBeNull] params object[] values) : this(
             argumentName, values.AsEnumerable()
         )
         {
         }
 
-        public ArgumentValues(string argumentName, bool isImplicit, params object[] values) :
+        public ArgumentValues([NotNull] string argumentName, bool isImplicit, [CanBeNull] params object[] values) :
             this(argumentName, values.AsEnumerable(), isImplicit)
         {
         }
 
         public ArgumentValues(
-            string argumentName,
-            IEnumerable<object> values = null,
+            [NotNull] string argumentName,
+            [CanBeNull] IEnumerable<object> values = null,
             bool isImplicit = false
         )
         {
             ArgumentName = argumentName;
-            mValues = new List<object>(values ?? Array.Empty<object>());
+            mValues = new List<object>(values ?? new object[0]);
             IsImplicit = isImplicit;
         }
 
+        [NotNull]
         public string ArgumentName { get; }
 
         public object Value => mValues.FirstOrDefault();
 
+        [NotNull]
         public IList<object> Values => mValues.ToImmutableList() ?? throw new InvalidOperationException();
 
         public bool IsEmpty => mValues.Count < 1;

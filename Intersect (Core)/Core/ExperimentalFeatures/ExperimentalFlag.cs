@@ -2,6 +2,8 @@
 
 using Intersect.Utilities;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect.Core.ExperimentalFeatures
@@ -17,9 +19,9 @@ namespace Intersect.Core.ExperimentalFeatures
         [JsonIgnore]
         public Guid Guid => mGuid;
 
-        [JsonProperty(nameof(Name))] private string mName;
+        [JsonProperty(nameof(Name)), NotNull] private string mName;
 
-        [JsonIgnore]
+        [JsonIgnore, NotNull]
         public string Name => mName;
 
         [JsonProperty(nameof(Enabled))] private bool mEnabled;
@@ -36,7 +38,7 @@ namespace Intersect.Core.ExperimentalFeatures
         }
 
         public ExperimentalFlag(
-            string name,
+            [NotNull] string name,
             Guid namespaceId,
             bool enabled = false,
             IExperimentalFlag parentFlag = null
@@ -73,12 +75,12 @@ namespace Intersect.Core.ExperimentalFeatures
             return flag.Enabled;
         }
 
-        public static bool operator ==(ExperimentalFlag a, IExperimentalFlag b)
+        public static bool operator ==(ExperimentalFlag a, [NotNull] IExperimentalFlag b)
         {
             return a.Guid == b.Guid && a.Enabled == b.Enabled;
         }
 
-        public static bool operator !=(ExperimentalFlag a, IExperimentalFlag b)
+        public static bool operator !=(ExperimentalFlag a, [NotNull] IExperimentalFlag b)
         {
             return a.Guid != b.Guid || a.Enabled != b.Enabled;
         }

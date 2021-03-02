@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class TradeRequestResponsePacket : IntersectPacket
+
+    public class TradeRequestResponsePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public TradeRequestResponsePacket()
-        {
-        }
 
         public TradeRequestResponsePacket(Guid tradeId, bool accepting)
         {
@@ -17,10 +12,8 @@ namespace Intersect.Network.Packets.Client
             AcceptingInvite = accepting;
         }
 
-        [Key(0)]
         public Guid TradeId { get; set; }
 
-        [Key(1)]
         public bool AcceptingInvite { get; set; }
 
     }

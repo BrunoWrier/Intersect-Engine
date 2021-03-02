@@ -1,7 +1,5 @@
-﻿
-using Intersect.Admin.Actions;
+﻿using Intersect.Admin.Actions;
 using Intersect.Server.Database;
-using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Entities;
@@ -17,7 +15,7 @@ namespace Intersect.Server.Admin.Actions
         //BanAction
         public static void ProcessAction(Client client, Player player, BanAction action)
         {
-            var target = Player.Find(action.Name);
+            var target = DbInterface.GetPlayer(action.Name);
             if (target != null)
             {
                 if (string.IsNullOrEmpty(Ban.CheckBan(target.User, "")))
@@ -33,32 +31,17 @@ namespace Intersect.Server.Admin.Actions
                         Ban.Add(target.User, action.DurationDays, action.Reason, player.Name, "");
                     }
 
-                    using (var logging = DbInterface.LoggingContext)
-                    {
-                        logging.UserActivityHistory.Add(
-                            new UserActivityHistory
-                            {
-                                UserId = target.UserId,
-                                PlayerId = target.Id,
-                                Ip = target.Client?.GetIp(),
-                                Peer = UserActivityHistory.PeerType.Client,
-                                Action = UserActivityHistory.UserAction.DisconnectBan,
-                                Meta = $"{target.User?.Name},{target.Name}"
-                            }
-                        );
-                    }
-
                     target.Client?.Disconnect();
-                    PacketSender.SendChatMsg(player, Strings.Account.banned.ToString(target.Name), Enums.ChatMessageType.Admin, Color.Red);
+                    PacketSender.SendChatMsg(player, Strings.Account.banned.ToString(target.Name), Color.Red);
                 }
                 else
                 {
-                    PacketSender.SendChatMsg(player, Strings.Account.alreadybanned.ToString(target.Name), Enums.ChatMessageType.Admin, Color.Red);
+                    PacketSender.SendChatMsg(player, Strings.Account.alreadybanned.ToString(target.Name), Color.Red);
                 }
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
             }
         }
 
@@ -68,27 +51,12 @@ namespace Intersect.Server.Admin.Actions
             var target = Player.FindOnline(action.Name);
             if (target != null)
             {
-                using (var logging = DbInterface.LoggingContext)
-                {
-                    logging.UserActivityHistory.Add(
-                        new UserActivityHistory
-                        {
-                            UserId = target.UserId,
-                            PlayerId = target.Id,
-                            Ip = target.Client.GetIp(),
-                            Peer = UserActivityHistory.PeerType.Client,
-                            Action = UserActivityHistory.UserAction.DisconnectKick,
-                            Meta = $"{target.Client.Name},{target.Name}"
-                        }
-                    );
-                }
-
                 PacketSender.SendGlobalMsg(Strings.Player.kicked.ToString(target.Name, player.Name));
                 target.Client?.Disconnect(); //Kick em'
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
             }
         }
 
@@ -98,23 +66,19 @@ namespace Intersect.Server.Admin.Actions
             var target = Player.FindOnline(action.Name);
             if (target != null)
             {
-                lock (target.EntityLock)
-                {
-                    target.Die(); //Kill em'
-                }
-                
+                target.Die(); //Kill em'
                 PacketSender.SendGlobalMsg(Strings.Player.killed.ToString(target.Name, player.Name));
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
             }
         }
 
         //MuteAction
         public static void ProcessAction(Client client, Player player, MuteAction action)
         {
-            var target = Player.Find(action.Name);
+            var target = DbInterface.GetPlayer(action.Name);
             if (target != null)
             {
                 if (string.IsNullOrEmpty(Mute.FindMuteReason(target.UserId, "")))
@@ -130,16 +94,16 @@ namespace Intersect.Server.Admin.Actions
                         Mute.Add(target.User, action.DurationDays, action.Reason, player.Name, "");
                     }
 
-                    PacketSender.SendChatMsg(player, Strings.Account.muted.ToString(target.Name), Enums.ChatMessageType.Admin, Color.Red);
+                    PacketSender.SendChatMsg(player, Strings.Account.muted.ToString(target.Name), Color.Red);
                 }
                 else
                 {
-                    PacketSender.SendChatMsg(player, Strings.Account.alreadymuted.ToString(target.Name), Enums.ChatMessageType.Admin, Color.Red);
+                    PacketSender.SendChatMsg(player, Strings.Account.alreadymuted.ToString(target.Name), Color.Red);
                 }
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
             }
         }
 
@@ -149,7 +113,7 @@ namespace Intersect.Server.Admin.Actions
             var target = Player.FindOnline(action.Name);
             if (client == null || target == null || target.Client == null)
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
 
                 return;
             }
@@ -185,12 +149,12 @@ namespace Intersect.Server.Admin.Actions
                 }
                 else
                 {
-                    PacketSender.SendChatMsg(player, Strings.Player.adminsetpower, Enums.ChatMessageType.Admin);
+                    PacketSender.SendChatMsg(player, Strings.Player.adminsetpower);
                 }
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.changeownpower, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.changeownpower);
             }
         }
 
@@ -205,7 +169,7 @@ namespace Intersect.Server.Admin.Actions
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
             }
         }
 
@@ -220,33 +184,33 @@ namespace Intersect.Server.Admin.Actions
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
             }
         }
 
         //UnbanAction
         public static void ProcessAction(Client client, Player player, UnbanAction action)
         {
-            var unbannedUser = User.Find(action.Name);
+            var unbannedUser = DbInterface.GetUser(action.Name);
             if (unbannedUser != null)
             {
                 Ban.Remove(unbannedUser);
-                PacketSender.SendChatMsg(player, Strings.Account.unbanned.ToString(unbannedUser.Name), Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Account.unbanned.ToString(unbannedUser.Name));
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Account.notfound.ToString(action.Name), Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Account.notfound.ToString(action.Name));
             }
         }
 
         //UnmuteAction
         public static void ProcessAction(Client client, Player player, UnmuteAction action)
         {
-            var unmutedUser = User.Find(action.Name);
+            var unmutedUser = DbInterface.GetUser(action.Name);
             if (unmutedUser != null)
             {
                 Mute.Remove(unmutedUser);
-                PacketSender.SendChatMsg(player, Strings.Account.unmuted.ToString(unmutedUser.Name), Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Account.unmuted.ToString(unmutedUser.Name));
             }
             else
             {
@@ -254,11 +218,11 @@ namespace Intersect.Server.Admin.Actions
                 if (target != null)
                 {
                     Mute.Remove(target.User);
-                    PacketSender.SendChatMsg(player, Strings.Account.unmuted.ToString(target.Name), Enums.ChatMessageType.Admin);
+                    PacketSender.SendChatMsg(player, Strings.Account.unmuted.ToString(target.Name));
                 }
                 else
                 {
-                    PacketSender.SendChatMsg(player, Strings.Account.notfound.ToString(action.Name), Enums.ChatMessageType.Admin);
+                    PacketSender.SendChatMsg(player, Strings.Account.notfound.ToString(action.Name));
                 }
             }
         }
@@ -270,12 +234,12 @@ namespace Intersect.Server.Admin.Actions
             if (target != null)
             {
                 player.Warp(target.MapId, (byte) target.X, (byte) target.Y);
-                PacketSender.SendChatMsg(player, Strings.Player.warpedto.ToString(target.Name), Enums.ChatMessageType.Admin);
-                PacketSender.SendChatMsg(target, Strings.Player.warpedtoyou.ToString(player.Name), Enums.ChatMessageType.Notice);
+                PacketSender.SendChatMsg(player, Strings.Player.warpedto.ToString(target.Name));
+                PacketSender.SendChatMsg(target, Strings.Player.warpedtoyou.ToString(player.Name));
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
             }
         }
 
@@ -298,12 +262,12 @@ namespace Intersect.Server.Admin.Actions
             if (target != null)
             {
                 target.Warp(player.MapId, (byte) player.X, (byte) player.Y);
-                PacketSender.SendChatMsg(player, Strings.Player.haswarpedto.ToString(target.Name), Enums.ChatMessageType.Admin, player.Name);
-                PacketSender.SendChatMsg(target, Strings.Player.beenwarpedto.ToString(player.Name), Enums.ChatMessageType.Notice, player.Name);
+                PacketSender.SendChatMsg(player, Strings.Player.haswarpedto.ToString(target.Name), player.Name);
+                PacketSender.SendChatMsg(target, Strings.Player.beenwarpedto.ToString(player.Name), player.Name);
             }
             else
             {
-                PacketSender.SendChatMsg(player, Strings.Player.offline, Enums.ChatMessageType.Admin);
+                PacketSender.SendChatMsg(player, Strings.Player.offline);
             }
         }
 

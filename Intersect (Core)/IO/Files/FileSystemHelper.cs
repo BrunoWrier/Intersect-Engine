@@ -8,14 +8,18 @@ using System.Reflection;
 using Intersect.Extensions;
 using Intersect.Logging;
 
+using JetBrains.Annotations;
+
 namespace Intersect.IO.Files
 {
     public static class FileSystemHelper
     {
-        private static readonly string[] SizePrefixes = {"", "K", "M", "G", "T", "P", "E"};
+        [NotNull] private static readonly string[] SizePrefixes = {"", "K", "M", "G", "T", "P", "E"};
 
+        [NotNull]
         internal static IFileSystem FileSystem { get; set; } = new FileSystem();
 
+        [NotNull]
         public static string FormatSize(long bytes, bool binary = false)
         {
             double sizeBase = binary ? 1024 : 1000;
@@ -36,7 +40,7 @@ namespace Intersect.IO.Files
         /// <code>false</code> if the path is a file or creation fails
         /// <code>true</code> if the path is a directory or creation succeeded
         /// </returns>
-        public static bool EnsureDirectoryExists(string directoryPath)
+        public static bool EnsureDirectoryExists([NotNull] string directoryPath)
         {
             Debug.Assert(FileSystem.Directory != null, "FileSystem.Directory != null");
 
@@ -62,7 +66,8 @@ namespace Intersect.IO.Files
             }
         }
 
-        public static string RelativePath(string from, string to)
+        [NotNull]
+        public static string RelativePath([NotNull] string from, [NotNull] string to)
         {
             Contract.Requires(from != null);
             Contract.Requires(to != null);
@@ -93,7 +98,8 @@ namespace Intersect.IO.Files
             return relative;
         }
 
-        public static string CleanPath(string path)
+        [NotNull]
+        public static string CleanPath([NotNull] string path)
         {
             Contract.Requires(path != null);
             var cleaned = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
@@ -101,9 +107,9 @@ namespace Intersect.IO.Files
             return cleaned.TerminateWith(Path.AltDirectorySeparatorChar, !IsFile(cleaned, false));
         }
 
-        public static bool IsFile(string path) => IsFile(path, true);
+        public static bool IsFile([NotNull] string path) => IsFile(path, true);
 
-        private static bool IsFile(string path, bool doClean)
+        private static bool IsFile([NotNull] string path, bool doClean)
         {
             Contract.Requires(path != null);
 

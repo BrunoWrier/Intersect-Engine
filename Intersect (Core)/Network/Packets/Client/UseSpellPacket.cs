@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class UseSpellPacket : IntersectPacket
+
+    public class UseSpellPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public UseSpellPacket()
-        {
-        }
 
         public UseSpellPacket(int slot, Guid targetId)
         {
@@ -17,10 +12,8 @@ namespace Intersect.Network.Packets.Client
             TargetId = targetId;
         }
 
-        [Key(0)]
         public int Slot { get; set; }
 
-        [Key(1)]
         public Guid TargetId { get; set; }
 
     }

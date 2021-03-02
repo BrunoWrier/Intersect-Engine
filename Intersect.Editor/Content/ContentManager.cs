@@ -12,6 +12,8 @@ using Intersect.IO.Files;
 using Intersect.Logging;
 using Intersect.Utilities;
 
+using JetBrains.Annotations;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -52,7 +54,7 @@ namespace Intersect.Editor.Content
         }
 
         //Game Content
-        public static List<Texture> AllTextures { get; } = new List<Texture>();
+        [NotNull] public static List<Texture> AllTextures { get; } = new List<Texture>();
 
         public static List<Texture> FogTextures = new List<Texture>();
 

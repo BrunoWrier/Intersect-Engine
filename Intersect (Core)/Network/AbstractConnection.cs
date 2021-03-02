@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 using Intersect.Logging;
 
@@ -8,21 +7,25 @@ namespace Intersect.Network
 
     public abstract class AbstractConnection : IConnection
     {
-        private readonly object mDisposeLock;
 
         private bool mDisposed;
 
         protected AbstractConnection(Guid? guid = null)
         {
-            mDisposeLock = new object();
+            if (!guid.HasValue)
+            {
+                guid = Guid.NewGuid();
+            }
 
-            Guid = guid ?? Guid.NewGuid();
+            Guid = guid.Value;
             Statistics = new ConnectionStatistics();
         }
 
+        public Ceras Ceras { get; } = new Ceras(true);
+
         public virtual void Dispose()
         {
-            lock (mDisposeLock)
+            lock (this)
             {
                 if (mDisposed)
                 {
@@ -43,7 +46,7 @@ namespace Intersect.Network
 
         public ConnectionStatistics Statistics { get; }
 
-        public abstract bool Send(IPacket packet, TransmissionMode mode = TransmissionMode.All);
+        public abstract bool Send(IPacket packet);
 
         public virtual void HandleConnected()
         {
@@ -61,7 +64,7 @@ namespace Intersect.Network
         {
             IsConnected = false;
 
-            Log.Debug($"Connection terminated to remote [{Guid}/{Ip}:{Port}].");
+            Log.Debug($"Connectioned terminated to remote [{Guid}/{Ip}:{Port}].");
         }
 
     }

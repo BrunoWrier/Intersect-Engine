@@ -3,13 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Collections
 {
 
     public struct SingleOrList<TValue> : IList<TValue>
     {
 
-        private readonly IList<TValue> mValues;
+        [NotNull] private readonly IList<TValue> mValues;
 
         public SingleOrList(params TValue[] values) : this(
             values as IEnumerable<TValue> ?? throw new InvalidOperationException()
@@ -17,7 +19,7 @@ namespace Intersect.Collections
         {
         }
 
-        public SingleOrList(IEnumerable<TValue> values)
+        public SingleOrList([NotNull] IEnumerable<TValue> values)
         {
             mValues = values.ToList();
         }

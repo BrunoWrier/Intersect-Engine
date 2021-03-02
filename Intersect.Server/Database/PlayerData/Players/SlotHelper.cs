@@ -1,20 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Database.PlayerData.Players
 {
 
     public static class SlotHelper
     {
 
-        public static List<TSlot> Sort<TSlot>(List<TSlot> slots) where TSlot : ISlot
+        [NotNull]
+        public static List<TSlot> Sort<TSlot>([NotNull] List<TSlot> slots) where TSlot : ISlot
         {
             slots.Sort(CompareSlotIndex);
 
             return slots;
         }
 
-        public static int CompareSlotIndex<TSlot>(TSlot a, TSlot b) where TSlot : ISlot
+        public static int CompareSlotIndex<TSlot>([CanBeNull] TSlot a, [CanBeNull] TSlot b) where TSlot : ISlot
         {
             if (a == null || b == null)
             {
@@ -45,9 +48,9 @@ namespace Intersect.Server.Database.PlayerData.Players
         }
 
         public static bool ValidateSlots<TSlot>(
-            List<TSlot> slots,
+            [NotNull] List<TSlot> slots,
             int targetCount,
-            Func<int, TSlot> factory = null
+            [CanBeNull] Func<int, TSlot> factory = null
         ) where TSlot : ISlot
         {
             if (slots.Count >= targetCount)
@@ -70,7 +73,7 @@ namespace Intersect.Server.Database.PlayerData.Players
             return true;
         }
 
-        public static bool ValidateSlot<TSlot>(List<TSlot> slots, int slotIndex) where TSlot : ISlot
+        public static bool ValidateSlot<TSlot>([NotNull] List<TSlot> slots, int slotIndex) where TSlot : ISlot
         {
             // If we are outside the bounds of the slot collection
             // we don't expect to find anything, and realistically

@@ -136,9 +136,9 @@ namespace Intersect.Network.Lidgren
             NetConnection?.Disconnect(NetworkStatus.Quitting.ToString());
         }
 
-        public override bool Send(IPacket packet, TransmissionMode mode = TransmissionMode.All)
+        public override bool Send(IPacket packet)
         {
-            return Network?.Send(this, packet, mode) ?? false;
+            return Network?.Send(this, packet) ?? false;
         }
 
     }

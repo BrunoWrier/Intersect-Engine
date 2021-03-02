@@ -1,4 +1,5 @@
-﻿
+﻿using JetBrains.Annotations;
+
 using System;
 
 namespace Intersect.Network
@@ -7,15 +8,17 @@ namespace Intersect.Network
     {
         Guid Guid { get; }
 
+        Ceras Ceras { get; }
+
         bool IsConnected { get; }
 
         string Ip { get; }
 
         int Port { get; }
 
-        ConnectionStatistics Statistics { get; }
+        [NotNull] ConnectionStatistics Statistics { get; }
 
-        bool Send(IPacket packet, TransmissionMode mode = TransmissionMode.All);
+        bool Send(IPacket packet);
 
         void HandleConnected();
 

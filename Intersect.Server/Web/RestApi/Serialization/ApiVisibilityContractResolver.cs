@@ -9,6 +9,8 @@ using Intersect.Reflection;
 using Intersect.Security;
 using Intersect.Security.Claims;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json.Serialization;
 
 namespace Intersect.Server.Web.RestApi.Serialization
@@ -20,7 +22,7 @@ namespace Intersect.Server.Web.RestApi.Serialization
     public class ApiVisibilityContractResolver : DefaultContractResolver
     {
 
-        public ApiVisibilityContractResolver(HttpRequestContext requestContext)
+        public ApiVisibilityContractResolver([NotNull] HttpRequestContext requestContext)
         {
             RequestContext = requestContext;
         }
@@ -28,6 +30,7 @@ namespace Intersect.Server.Web.RestApi.Serialization
         /// <summary>
         /// 
         /// </summary>
+        [NotNull]
         public HttpRequestContext RequestContext { get; }
 
         /// <inheritdoc />

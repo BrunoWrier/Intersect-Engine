@@ -11,6 +11,8 @@ using Intersect.Network.Events;
 using Intersect.Network.Packets;
 using Intersect.Utilities;
 
+using JetBrains.Annotations;
+
 using Lidgren.Network;
 
 namespace Intersect.Network.Lidgren
@@ -23,17 +25,19 @@ namespace Intersect.Network.Lidgren
 
         private static readonly IConnection[] EmptyConnections = { };
 
-        private readonly IDictionary<long, Guid> mGuidLookup;
+        [NotNull] private readonly Ceras mCeras = new Ceras(true);
 
-        private readonly INetwork mNetwork;
+        [NotNull] private readonly IDictionary<long, Guid> mGuidLookup;
 
-        private readonly NetPeer mPeer;
+        [NotNull] private readonly INetwork mNetwork;
 
-        private readonly NetPeerConfiguration mPeerConfiguration;
+        [NotNull] private readonly NetPeer mPeer;
 
-        private readonly RandomNumberGenerator mRng;
+        [NotNull] private readonly NetPeerConfiguration mPeerConfiguration;
 
-        private readonly RSACryptoServiceProvider mRsa;
+        [NotNull] private readonly RandomNumberGenerator mRng;
+
+        [NotNull] private readonly RSACryptoServiceProvider mRsa;
 
         public LidgrenInterface(INetwork network, Type peerType, RSAParameters rsaParameters)
         {
@@ -83,7 +87,6 @@ namespace Intersect.Network.Lidgren
                 mPeerConfiguration.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
                 mPeerConfiguration.EnableMessageType(NetIncomingMessageType.DebugMessage);
                 mPeerConfiguration.EnableMessageType(NetIncomingMessageType.ErrorMessage);
-                mPeerConfiguration.EnableMessageType(NetIncomingMessageType.WarningMessage);
                 mPeerConfiguration.EnableMessageType(NetIncomingMessageType.Error);
             }
             else
@@ -92,13 +95,11 @@ namespace Intersect.Network.Lidgren
                 mPeerConfiguration.DisableMessageType(NetIncomingMessageType.VerboseDebugMessage);
                 mPeerConfiguration.DisableMessageType(NetIncomingMessageType.DebugMessage);
                 mPeerConfiguration.DisableMessageType(NetIncomingMessageType.ErrorMessage);
-                mPeerConfiguration.DisableMessageType(NetIncomingMessageType.WarningMessage);
                 mPeerConfiguration.DisableMessageType(NetIncomingMessageType.Error);
             }
 
             mPeerConfiguration.PingInterval = 2.5f;
             mPeerConfiguration.UseMessageRecycling = true;
-            mPeerConfiguration.AutoExpandMTU = true;
 
             var constructorInfo = peerType.GetConstructor(new[] {typeof(NetPeerConfiguration)});
             if (constructorInfo == null)
@@ -112,7 +113,6 @@ namespace Intersect.Network.Lidgren
             mGuidLookup = new Dictionary<long, Guid>();
 
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-            
             mPeer?.RegisterReceivedCallback(
                 peer =>
                 {
@@ -239,7 +239,7 @@ namespace Intersect.Network.Lidgren
             connection = FindConnection(message.SenderConnection);
             if (connection == null)
             {
-                //Log.Error($"Received message from an unregistered endpoint.");
+                Log.Error($"Received message from an unregistered endpoint.");
                 mPeer.Recycle(message);
 
                 return false;
@@ -264,7 +264,7 @@ namespace Intersect.Network.Lidgren
             }
             else
             {
-                //Log.Warn($"Received message from an unregistered endpoint.");
+                Log.Warn($"Received message from an unregistered endpoint.");
             }
 
             buffer = new LidgrenBuffer(message);
@@ -289,7 +289,8 @@ namespace Intersect.Network.Lidgren
                 return SendPacket(packet, EmptyConnections, transmissionMode);
             }
 
-            if (!(connection is LidgrenConnection lidgrenConnection))
+            var lidgrenConnection = connection as LidgrenConnection;
+            if (lidgrenConnection == null)
             {
                 Log.Diagnostic("Tried to send to a non-Lidgren connection.");
 
@@ -526,7 +527,7 @@ namespace Intersect.Network.Lidgren
 
                                 Debug.Assert(senderConnection != null, "connection != null");
                                 var approvalPacketData = senderConnection.RemoteHailMessage.Data;
-                                var approval = MessagePacker.Instance.Deserialize(approvalPacketData) as ApprovalPacket;
+                                var approval = mCeras.Deserialize<ApprovalPacket>(approvalPacketData);
 
                                 if (!(approval?.Decrypt(intersectConnection.Rsa) ?? false))
                                 {
@@ -703,7 +704,7 @@ namespace Intersect.Network.Lidgren
                 {
                     try
                     {
-                        var hail = MessagePacker.Instance.Deserialize(message.Data) as HailPacket;
+                        var hail = mCeras.Deserialize<HailPacket>(message.Data);
                         if (!(hail?.Decrypt(mRsa) ?? false))
                         {
                             Log.Warn($"Failed to read hail, denying connection [{lidgrenIdHex}].");
@@ -721,19 +722,11 @@ namespace Intersect.Network.Lidgren
 
                             break;
                         }
-                        
+
                         Log.Debug($"hail Time={hail.Adjusted / TimeSpan.TicksPerMillisecond} Offset={hail.Offset / TimeSpan.TicksPerMillisecond} Real={hail.UTC / TimeSpan.TicksPerMillisecond}");
                         Log.Debug($"local Time={Timing.Global.Milliseconds} Offset={(long)Timing.Global.MillisecondsOffset} Real={Timing.Global.MillisecondsUTC}");
                         Log.Debug($"real delta={(Timing.Global.TicksUTC - hail.UTC) / TimeSpan.TicksPerMillisecond}");
                         Log.Debug($"NCPing={(long)Math.Ceiling(senderConnection.AverageRoundtripTime * 1000)}");
-
-                        // Check if we've got more connections than we're allowed to handle!
-                        if (mNetwork.ConnectionCount >= Options.MaxConnections)
-                        {
-                            Log.Info($"Connection limit reached, denying connection [{lidgrenIdHex}].");
-                                senderConnection?.Deny(NetworkStatus.ServerFull.ToString());
-                            break;
-                        }
 
                         if (OnConnectionApproved == null)
                         {
@@ -849,8 +842,8 @@ namespace Intersect.Network.Lidgren
         private bool FireHandler(
             HandleConnectionEvent handler,
             string name,
-            INetworkLayerInterface sender,
-            ConnectionEventArgs connectionEventArgs
+            [NotNull] INetworkLayerInterface sender,
+            [NotNull] ConnectionEventArgs connectionEventArgs
         )
         {
             handler?.Invoke(sender, connectionEventArgs);
@@ -885,10 +878,7 @@ namespace Intersect.Network.Lidgren
                 throw new ArgumentNullException(nameof(connection.NetConnection));
             }
 
-            lock (connection.Aes)
-            {
-                message.Encrypt(connection.Aes);
-            }
+            message.Encrypt(connection.Aes);
             connection.NetConnection.SendMessage(message, deliveryMethod, sequenceChannel);
         }
 

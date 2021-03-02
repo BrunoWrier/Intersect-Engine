@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class CraftingTablePacket : IntersectPacket
+
+    public class CraftingTablePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public CraftingTablePacket()
-        {
-        }
 
         public CraftingTablePacket(string tableData, bool close)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Server
             Close = close;
         }
 
-        [Key(0)]
         public string TableData { get; set; }
 
-        [Key(1)]
         public bool Close { get; set; }
 
     }

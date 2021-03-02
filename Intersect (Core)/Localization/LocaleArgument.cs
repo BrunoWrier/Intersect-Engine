@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect.Localization
@@ -22,9 +24,9 @@ namespace Intersect.Localization
         }
 
         public LocaleArgument(
-            string name,
+            [NotNull] string name,
             char shortName = char.MinValue,
-            string description = null
+            [CanBeNull] string description = null
         ) : base(name, description)
         {
             mShortName = shortName;

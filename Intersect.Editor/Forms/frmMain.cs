@@ -10,8 +10,7 @@ using System.Windows.Forms;
 
 using DarkUI.Controls;
 using DarkUI.Forms;
-using Intersect.Compression;
-using Intersect.Config;
+
 using Intersect.Editor.Classes.ContentManagement;
 using Intersect.Editor.Content;
 using Intersect.Editor.Forms.DockingElements;
@@ -23,7 +22,6 @@ using Intersect.Editor.Maps;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.GameObjects;
-using Intersect.Localization;
 using Intersect.Network;
 using Intersect.Updater;
 
@@ -187,6 +185,7 @@ namespace Intersect.Editor.Forms
             timeEditorToolStripMenuItem.Text = Strings.MainForm.timeeditor;
 
             toolsToolStripMenuItem.Text = Strings.MainForm.tools;
+            packClientTexturesToolStripMenuItem.Text = Strings.MainForm.packtextures;
 
             helpToolStripMenuItem.Text = Strings.MainForm.help;
             postQuestionToolStripMenuItem.Text = Strings.MainForm.postquestion;
@@ -370,18 +369,6 @@ namespace Intersect.Editor.Forms
             Globals.InEditor = true;
             GrabMouseDownEvents();
             UpdateRunState();
-
-            //Init layer visibility buttons
-            foreach (var layer in Options.Instance.MapOpts.Layers.All)
-            {
-                Strings.Tiles.maplayers.TryGetValue(layer.ToLower(), out LocalizedString layerName);
-                if (layerName == null) layerName = layer;
-                var btn = new ToolStripMenuItem(layerName);
-                btn.Checked = true;
-                btn.Click += HideLayerBtn_Click;
-                btn.Tag = layer;
-                layersToolStripMenuItem.DropDownItems.Add(btn);
-            }
         }
 
         protected override void OnClosed(EventArgs e)
@@ -515,7 +502,7 @@ namespace Intersect.Editor.Forms
             }
 
             //Process the Fill/Erase Buttons
-            if (Options.Instance.MapOpts.Layers.All.Contains(Globals.CurrentLayer))
+            if (Globals.CurrentLayer <= Options.LayerCount)
             {
                 toolStripBtnFill.Enabled = true;
                 fillToolStripMenuItem.Enabled = true;
@@ -535,20 +522,20 @@ namespace Intersect.Editor.Forms
             toolStripBtnSelect.Enabled = true;
             toolStripBtnRect.Enabled = false;
             toolStripBtnEyeDrop.Enabled = false;
-            if (Globals.CurrentLayer == LayerOptions.Attributes)
+            if (Globals.CurrentLayer == Options.LayerCount) //Attributes
             {
                 toolStripBtnPen.Enabled = true;
                 toolStripBtnRect.Enabled = true;
             }
-            else if (Globals.CurrentLayer == LayerOptions.Lights)
+            else if (Globals.CurrentLayer == Options.LayerCount + 1) //Lights
             {
                 Globals.CurrentTool = (int) EditingTool.Selection;
             }
-            else if (Globals.CurrentLayer == LayerOptions.Events)
+            else if (Globals.CurrentLayer == Options.LayerCount + 2) //Events
             {
                 Globals.CurrentTool = (int) EditingTool.Selection;
             }
-            else if (Globals.CurrentLayer == LayerOptions.Npcs)
+            else if (Globals.CurrentLayer == Options.LayerCount + 3) //NPCS
             {
                 Globals.CurrentTool = (int) EditingTool.Selection;
             }
@@ -1053,7 +1040,7 @@ namespace Intersect.Editor.Forms
         //Edit
         private void fillToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Options.Instance.MapOpts.Layers.All.Contains(Globals.CurrentLayer))
+            if (Globals.CurrentLayer <= Options.LayerCount)
             {
                 Globals.MapEditorWindow.FillLayer();
             }
@@ -1061,7 +1048,7 @@ namespace Intersect.Editor.Forms
 
         private void eraseLayerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Options.Instance.MapOpts.Layers.All.Contains(Globals.CurrentLayer))
+            if (Globals.CurrentLayer <= Options.LayerCount)
             {
                 Globals.MapEditorWindow.EraseLayer();
             }
@@ -1218,24 +1205,6 @@ namespace Intersect.Editor.Forms
         private void timeEditorToolStripMenuItem_Click(object sender, EventArgs e)
         {
             PacketSender.SendOpenEditor(GameObjectType.Time);
-        }
-
-        private void layersToolStripMenuItem_DropDownOpened(object sender, EventArgs e)
-        {
-            foreach (var itm in ((ToolStripMenuItem)sender).DropDownItems)
-            {
-                var btn = (ToolStripMenuItem)itm;
-                btn.Checked = Globals.MapLayersWindow.LayerVisibility[(string)btn.Tag];
-            }
-        }
-
-        private void HideLayerBtn_Click(object sender, EventArgs e)
-        {
-            var btn = ((ToolStripMenuItem)sender);
-            var tag = (string)btn.Tag;
-            btn.Checked = !btn.Checked;
-            Globals.MapLayersWindow.LayerVisibility[tag] = btn.Checked;
-            Globals.MapLayersWindow.SetLayer(Globals.CurrentLayer);
         }
 
         //Help
@@ -1667,17 +1636,21 @@ namespace Intersect.Editor.Forms
 
         private void packClientTexturesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            
+            Globals.PackingProgressForm = new FrmProgress();
+            Globals.PackingProgressForm.SetTitle(Strings.TexturePacking.title);
+            var packingthread = new Thread(() => packTextures());
+            packingthread.Start();
+            Globals.PackingProgressForm.ShowDialog();
         }
 
-        private void packAssets()
+        private void packTextures()
         {
-            //TODO: Make packing heuristic that the texture packer class should use configurable.
-            var maxPackSize = Convert.ToInt32(Preferences.LoadPreference("TexturePackSize"));
+            //TODO: Make the max pack size a configurable option, along with the packing heuristic that the texture packer class should use.
+            var maxPackSize = 2048;
             var packsPath = Path.Combine("resources", "packs");
 
             //Delete Old Packs
-            Globals.PackingProgressForm.SetProgress(Strings.AssetPacking.deleting, 10, false);
+            Globals.PackingProgressForm.SetProgress(Strings.TexturePacking.deleting, 10, false);
             Application.DoEvents();
             if (Directory.Exists(packsPath))
             {
@@ -1699,7 +1672,7 @@ namespace Intersect.Editor.Forms
             }
 
             //Create two 'sets' of graphics we want to pack. Tilesets + Fogs in one set, everything else in the other.
-            Globals.PackingProgressForm.SetProgress(Strings.AssetPacking.collecting, 20, false);
+            Globals.PackingProgressForm.SetProgress(Strings.TexturePacking.collecting, 20, false);
             Application.DoEvents();
             var toPack = new HashSet<Texture>();
             foreach (var tex in GameContentManager.TilesetTextures)
@@ -1720,7 +1693,7 @@ namespace Intersect.Editor.Forms
                 }
             }
 
-            Globals.PackingProgressForm.SetProgress(Strings.AssetPacking.calculating, 30, false);
+            Globals.PackingProgressForm.SetProgress(Strings.TexturePacking.calculating, 30, false);
             Application.DoEvents();
             var packs = new List<TexturePacker>();
             while (toPack.Count > 0)
@@ -1760,7 +1733,7 @@ namespace Intersect.Editor.Forms
                 }
             }
 
-            Globals.PackingProgressForm.SetProgress(Strings.AssetPacking.exporting, 40, false);
+            Globals.PackingProgressForm.SetProgress(Strings.TexturePacking.exporting, 40, false);
             Application.DoEvents();
             var packIndex = 0;
             foreach (var pack in packs)
@@ -1769,17 +1742,7 @@ namespace Intersect.Editor.Forms
                 packIndex++;
             }
 
-            // Package up sounds!
-            Globals.PackingProgressForm.SetProgress(Strings.AssetPacking.sounds, 80, false);
-            Application.DoEvents();
-            AssetPacker.PackageAssets(Path.Combine("resources", "sounds"), "*.wav", packsPath, "sound.index", "sound", ".asset", Convert.ToInt32(Preferences.LoadPreference("SoundBatchSize")));
-
-            // Package up music!
-            Globals.PackingProgressForm.SetProgress(Strings.AssetPacking.music, 90, false);
-            Application.DoEvents();
-            AssetPacker.PackageAssets(Path.Combine("resources", "music"), "*.ogg", packsPath, "music.index", "music", ".asset", Convert.ToInt32(Preferences.LoadPreference("MusicBatchSize")));
-
-            Globals.PackingProgressForm.SetProgress(Strings.AssetPacking.done, 100, false);
+            Globals.PackingProgressForm.SetProgress(Strings.TexturePacking.done, 100, false);
             Application.DoEvents();
             System.Threading.Thread.Sleep(1000);
 
@@ -1829,18 +1792,7 @@ namespace Intersect.Editor.Forms
                             return;
                         }
                     }
-
-                    // Are we configured to package up our assets for an update?
-                    var packageUpdateAssets = Preferences.LoadPreference("PackageUpdateAssets");
-                    if (packageUpdateAssets != "" && Convert.ToBoolean(packageUpdateAssets))
-                    {
-                        Globals.PackingProgressForm = new FrmProgress();
-                        Globals.PackingProgressForm.SetTitle(Strings.AssetPacking.title);
-                        var assetThread = new Thread(() => packAssets());
-                        assetThread.Start();
-                        Globals.PackingProgressForm.ShowDialog();
-                    }
-
+                    
                     Globals.UpdateCreationProgressForm = new FrmProgress();
                     Globals.UpdateCreationProgressForm.SetTitle(Strings.UpdatePacking.Title);
                     Globals.UpdateCreationProgressForm.SetProgress(Strings.UpdatePacking.Deleting,10,false);
@@ -1881,44 +1833,19 @@ namespace Intersect.Editor.Forms
 
                 if (Directory.Exists(Path.Combine("resources", "packs")))
                 {
-                    var packs = Directory.GetFiles(Path.Combine("resources", "packs"), "*.meta");
+                    var packs = Directory.GetFiles(Path.Combine("resources", "packs"), "*.json");
                     foreach (var pack in packs)
                     {
-                        var obj = JObject.Parse(GzipCompression.ReadDecompressedString(pack))["frames"];
+                        var obj = JObject.Parse(File.ReadAllText(pack))["frames"];
                         foreach (var frame in obj.Children())
                         {
                             var filename = frame["filename"].ToString();
                             clientExcludeFiles.Add(filename);
                         }
                     }
-
-                    var soundIndex = Path.Combine("resources", "packs", "sound.index");
-                    if (File.Exists(soundIndex))
-                    {
-                        using (var soundPacker = new AssetPacker(soundIndex, Path.Combine("resources", "packs")))
-                        {
-                            foreach (var sound in soundPacker.FileList)
-                            {
-                                // Add as lowercase as our update generator checks for lowercases!
-                                clientExcludeFiles.Add(Path.Combine("resources", "sounds", sound.ToLower()).Replace('\\', '/'));
-                            }
-                        }
-                    }
-
-                    var musicIndex = Path.Combine("resources", "packs", "music.index");
-                    if (File.Exists(musicIndex))
-                    {
-                        using (var musicPacker = new AssetPacker(musicIndex, Path.Combine("resources", "packs")))
-                        {
-                            foreach (var music in musicPacker.FileList)
-                            {
-                                // Add as lowercase as our update generator checks for lowercases!
-                                clientExcludeFiles.Add(Path.Combine("resources", "music", music.ToLower()).Replace('\\', '/'));
-                            }
-                        }
-                    }
-
                 }
+
+
 
                 var fileCount = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.*", SearchOption.AllDirectories).Length;
 

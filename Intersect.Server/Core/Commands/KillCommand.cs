@@ -21,11 +21,7 @@ namespace Intersect.Server.Core.Commands
                 return;
             }
 
-            lock (target.Entity)
-            {
-                target.Entity.Die();
-            }
-            
+            target.Entity.Die();
             PacketSender.SendGlobalMsg($@"    {Strings.Player.serverkilled.ToString(target.Entity.Name)}");
             Console.WriteLine($@"    {Strings.Commandoutput.killsuccess.ToString(target.Entity.Name)}");
         }

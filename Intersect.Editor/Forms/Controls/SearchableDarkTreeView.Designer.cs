@@ -1,5 +1,8 @@
 ﻿namespace Intersect.Editor.Forms.Controls
 {
+    using JetBrains.Annotations;
+    using System.Windows.Forms;
+
     partial class SearchableDarkTreeView
     {
 

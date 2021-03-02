@@ -1,31 +1,15 @@
-﻿using MessagePack;
-using System;
-
-namespace Intersect.Network.Packets.Client
+﻿namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class PickupItemPacket : IntersectPacket
+
+    public class PickupItemPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public PickupItemPacket()
+
+        public PickupItemPacket(int index)
         {
+            MapItemIndex = index;
         }
 
-        public PickupItemPacket(Guid mapId, int tileIndex, Guid uniqueId)
-        {
-            MapId = mapId;
-            UniqueId = uniqueId;
-            TileIndex = tileIndex;
-        }
-
-        [Key(0)]
-        public Guid UniqueId { get; set; }
-
-        [Key(1)]
-        public Guid MapId { get; set; }
-
-        [Key(2)]
-        public int TileIndex { get; set; }
+        public int MapItemIndex { get; set; }
 
     }
 

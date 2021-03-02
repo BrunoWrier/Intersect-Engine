@@ -15,7 +15,6 @@ namespace Intersect.Client
     /// </summary>
     public static class Program
     {
-
         public static string OpenALLink = "";
 
         public static string OpenGLLink = "";
@@ -24,7 +23,7 @@ namespace Intersect.Client
         ///     The main entry point for the application.
         /// </summary>
         [STAThread]
-        public static void Main(string[] args)
+        public static void Main()
         {
             CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
             CosturaUtility.Initialize();
@@ -34,54 +33,49 @@ namespace Intersect.Client
 
             try
             {
-                var type = Type.GetType("Intersect.Client.Core.Bootstrapper", true);
+                var type = Type.GetType("Intersect.Client.MonoGame.IntersectGame", true);
                 Debug.Assert(type != null, "type != null");
-                var method = type.GetMethod("Start");
-                Debug.Assert(method != null, "method != null");
-                method.Invoke(null, new object[] {args});
+                var instance = Activator.CreateInstance(type);
+                type.InvokeMember("Run", BindingFlags.InvokeMethod, null, instance, null);
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                switch (exception.InnerException?.GetType().Name)
+                if (ex.InnerException != null &&
+                    ex.InnerException.GetType().Name == "NoSuitableGraphicsDeviceException")
                 {
-                    case "NoSuitableGraphicsDeviceException":
+                    var txt = "NoSuitableGraphicsDeviceException" + Environment.NewLine;
+                    txt += ex.InnerException.ToString();
+                    txt += ex.InnerException.InnerException.ToString();
+                    File.WriteAllText("gfxerror.txt", txt);
+
+                    if (!string.IsNullOrEmpty(OpenGLLink))
                     {
-                        var txt = "NoSuitableGraphicsDeviceException" + Environment.NewLine;
-                        txt += exception.InnerException.ToString();
-                        txt += exception.InnerException.InnerException?.ToString();
-                        File.WriteAllText("gfxerror.txt", txt);
-
-                        if (!string.IsNullOrEmpty(OpenGLLink))
-                        {
-                            Process.Start(OpenGLLink);
-                        }
-
-                        Environment.Exit(-1);
-                        break;
+                        Process.Start(OpenGLLink);
                     }
 
-                    case "NoAudioHardwareException":
-                    {
-                        if (!string.IsNullOrEmpty(OpenALLink))
-                        {
-                            Process.Start(OpenALLink);
-                        }
-
-                        Environment.Exit(-1);
-                        break;
-                    }
+                    Environment.Exit(-1);
                 }
 
-                var type = Type.GetType("Intersect.Client.Core.ClientContext", true);
+                if (ex.InnerException != null && ex.InnerException.GetType().Name == "NoAudioHardwareException")
+                {
+                    if (!string.IsNullOrEmpty(OpenALLink))
+                    {
+                        Process.Start(OpenALLink);
+                    }
+
+                    Environment.Exit(-1);
+                }
+
+                var type = Type.GetType("Intersect.Client.MonoGame.IntersectGame", true);
                 Debug.Assert(type != null, "type != null");
-
-                var staticMethodInfo = type.GetMethod(
-                    "DispatchUnhandledException", BindingFlags.Static | BindingFlags.NonPublic
+                var staticMethodInfo = type.GetMethod("CurrentDomain_UnhandledException");
+                staticMethodInfo.Invoke(
+                    null,
+                    new object[]
+                    {
+                        null, new UnhandledExceptionEventArgs(ex.InnerException != null ? ex.InnerException : ex, true)
+                    }
                 );
-
-                Debug.Assert(staticMethodInfo != null, nameof(staticMethodInfo) + " != null");
-
-                staticMethodInfo.Invoke(null, new object[] {exception.InnerException ?? exception, true, true});
             }
         }
 
@@ -174,8 +168,8 @@ namespace Intersect.Client
 
                 case PlatformID.Unix:
                 default:
-                    ExportDependency("libopenal.so.1", "");
-                    ExportDependency("libSDL2-2.0.so.0", "");
+                    ExportDependency("libopenal.so.1", "x64");
+                    ExportDependency("libSDL2-2.0.so.0", "x64");
                     ExportDependency("openal32.dll", "");
                     ExportDependency("MonoGame.Framework.dll.config", "", "MonoGame.Framework.Client.dll.config");
 
@@ -220,7 +214,9 @@ namespace Intersect.Client
                 Debug.Assert(resourceStream != null, "resourceStream != null");
                 var resources = new ResourceSet(resourceStream);
 
-                path = Path.Combine("resources", folder, filename.Split('.')[0].Split('-')[0]);
+                path = Path.Combine(
+                    "resources", folder, filename.Split(new char[] {'.'})[0]?.Split(new char[] {'-'})[0]
+                );
 
                 path = path.ToLower();
 

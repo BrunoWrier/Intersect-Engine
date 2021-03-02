@@ -6,6 +6,8 @@ using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Localization;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Core.Commands
 {
 
@@ -19,6 +21,7 @@ namespace Intersect.Server.Core.Commands
         {
         }
 
+        [NotNull]
         private VariableArgument<string> Role => FindArgumentOrThrow<VariableArgument<string>>(1);
 
         protected override void HandleTarget(ServerContext context, ParserResult result, User target)
@@ -69,7 +72,7 @@ namespace Intersect.Server.Core.Commands
                 return;
             }
 
-            target.Save();
+            DbInterface.SavePlayerDatabaseAsync();
 
             Console.WriteLine(Strings.Commandoutput.apirolegranted.ToString(target.Name, role));
         }

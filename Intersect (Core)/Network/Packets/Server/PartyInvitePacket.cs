@@ -1,15 +1,10 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class PartyInvitePacket : IntersectPacket
+
+    public class PartyInvitePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public PartyInvitePacket()
-        {
-        }
 
         public PartyInvitePacket(string leaderName, Guid leaderId)
         {
@@ -17,10 +12,8 @@ namespace Intersect.Network.Packets.Server
             LeaderId = leaderId;
         }
 
-        [Key(0)]
         public string LeaderName { get; set; }
 
-        [Key(1)]
         public Guid LeaderId { get; set; }
 
     }

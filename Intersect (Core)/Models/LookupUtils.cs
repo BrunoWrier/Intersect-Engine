@@ -6,13 +6,15 @@ using Intersect.Collections;
 using Intersect.Enums;
 using Intersect.Logging;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Models
 {
 
     public static class LookupUtils
     {
 
-        private static readonly object Lock = new object();
+        [NotNull] private static readonly object Lock = new object();
 
         private static Dictionary<Type, GameObjectType> sEnumMap;
 
@@ -24,6 +26,7 @@ namespace Intersect.Models
         public static Dictionary<Type, GameObjectType> EnumMap => sEnumMap =
             sEnumMap ?? new Dictionary<Type, GameObjectType>();
 
+        [NotNull]
         public static DatabaseObjectLookup GetLookup(Type type)
         {
             if (type == null)

@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
+
 using Intersect.Client.Core;
 using Intersect.Client.Core.Sounds;
 using Intersect.Client.Entities;
@@ -13,13 +12,13 @@ using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.General;
 using Intersect.Client.Items;
-using Intersect.Client.Localization;
-using Intersect.Compression;
 using Intersect.Enums;
 using Intersect.GameObjects;
 using Intersect.GameObjects.Maps;
 using Intersect.Network.Packets.Server;
 using Intersect.Utilities;
+
+using JetBrains.Annotations;
 
 using Newtonsoft.Json;
 
@@ -52,7 +51,7 @@ namespace Intersect.Client.Maps
         public List<MapSound> AttributeSounds = new List<MapSound>();
 
         //Map Animations
-        public ConcurrentDictionary<Guid, MapAnimation> LocalAnimations = new ConcurrentDictionary<Guid, MapAnimation>();
+        public List<MapAnimation> LocalAnimations = new List<MapAnimation>();
 
         public Dictionary<Guid, Entity> LocalEntities = new Dictionary<Guid, Entity>();
 
@@ -60,11 +59,11 @@ namespace Intersect.Client.Maps
         public List<Guid> LocalEntitiesToDispose = new List<Guid>();
 
         //Map Items
-        public Dictionary<int, List<MapItemInstance>> MapItems = new Dictionary<int, List<MapItemInstance>>();
+        public Dictionary<int, MapItemInstance> MapItems = new Dictionary<int, MapItemInstance>();
 
         //Map Attributes
-        private Dictionary<MapAttribute, Animation> mAttributeAnimInstances =
-            new Dictionary<MapAttribute, Animation>();
+        private Dictionary<Intersect.GameObjects.Maps.MapAttribute, Animation> mAttributeAnimInstances =
+            new Dictionary<Intersect.GameObjects.Maps.MapAttribute, Animation>();
 
         protected float mCurFogIntensity;
 
@@ -92,18 +91,18 @@ namespace Intersect.Client.Maps
 
         private bool mTexturesFound = false;
 
-        private Dictionary<string,Dictionary<object, GameTileBuffer[]>> mTileBufferDict = new Dictionary<string,Dictionary<object, GameTileBuffer[]>>(); //[Layer][?][?]
+        private Dictionary<object, GameTileBuffer[]>[] mTileBufferDict =
+            new Dictionary<object, GameTileBuffer[]>[Options.LayerCount];
 
-        private Dictionary<string, GameTileBuffer[][]> mTileBuffers = new Dictionary<string, GameTileBuffer[][]>(); //[Layer][Autotile Frame][Buffer Index]
+        private GameTileBuffer[][][] mTileBuffers; //Array is layer, autotile frame, buffer index
 
         //Initialization
         public MapInstance(Guid id) : base(id)
         {
-            mTileBuffers.Clear();
-            foreach (var layer in Options.Instance.MapOpts.Layers.All)
+            mTileBuffers = new GameTileBuffer[Options.LayerCount][][];
+            for (var i = 0; i < Options.LayerCount; i++)
             {
-                mTileBufferDict.Add(layer, new Dictionary<object, GameTileBuffer[]>());
-                mTileBuffers.Add(layer, new GameTileBuffer[3][]); //3 autotile frames per layer
+                mTileBuffers[i] = new GameTileBuffer[3][]; //3 autotile frames
             }
         }
 
@@ -120,6 +119,7 @@ namespace Intersect.Client.Maps
         //Map Sounds
         public MapSound BackgroundSound { get; set; }
 
+        [NotNull]
         public new static MapInstances Lookup => sLookup ?? (sLookup = new MapInstances(MapBase.Lookup));
 
         //Load
@@ -142,34 +142,27 @@ namespace Intersect.Client.Maps
 
         public void LoadTileData(byte[] packet)
         {
-            Layers = JsonConvert.DeserializeObject<Dictionary<string, Tile[,]>>(LZ4.UnPickleString(packet), mJsonSerializerSettings);
-            foreach (var layer in Options.Instance.MapOpts.Layers.All)
-            {
-                if (!Layers.ContainsKey(layer))
-                {
-                    Layers.Add(layer, new Tile[Options.MapWidth, Options.MapHeight]);
-                }
-            }
+            Layers = mCeras.Decompress<TileArray[]>(packet);
         }
 
         private void CacheTextures()
         {
             if (mTexturesFound == false && GameContentManager.Current.TilesetsLoaded)
             {
-                foreach (var layer in Options.Instance.MapOpts.Layers.All)
+                for (var i = 0; i < Options.LayerCount; i++)
                 {
                     for (var x = 0; x < Options.MapWidth; x++)
                     {
                         for (var y = 0; y < Options.MapHeight; y++)
                         {
-                            var tileset = TilesetBase.Get(Layers[layer][x, y].TilesetId);
+                            var tileset = TilesetBase.Get(Layers[i].Tiles[x, y].TilesetId);
                             if (tileset != null)
                             {
                                 var tilesetTex = Globals.ContentManager.GetTexture(
                                     GameContentManager.TextureType.Tileset, tileset.Name
                                 );
 
-                                Layers[layer][x, y].TilesetTex = tilesetTex;
+                                Layers[i].Tiles[x, y].TilesetTex = tilesetTex;
                             }
                         }
                     }
@@ -188,19 +181,12 @@ namespace Intersect.Client.Maps
                 UpdateMapAttributes();
                 if (BackgroundSound == null && !TextUtils.IsNone(Sound))
                 {
-                    BackgroundSound = Audio.AddMapSound(Sound, -1, -1, Id, true, 0, 10);
+                    BackgroundSound = Audio.AddMapSound(Sound, -1, -1, Id, true, 10);
                 }
 
                 foreach (var anim in LocalAnimations)
                 {
-                    if (anim.Value.Disposed())
-                    {
-                        LocalAnimations.TryRemove(anim.Key, out MapAnimation removed);
-                    }
-                    else
-                    {
-                        anim.Value.Update();
-                    }
+                    anim.Update();
                 }
 
                 foreach (var en in LocalEntities)
@@ -332,13 +318,13 @@ namespace Intersect.Client.Maps
                 }
 
                 //Along with edges we need to recalculate ALL cliffs :(
-                foreach (var layer in Options.Instance.MapOpts.Layers.All)
+                for (var x = 0; x < Options.MapWidth; x++)
                 {
-                    for (var x = 0; x < Options.MapWidth; x++)
+                    for (var y = 0; y < Options.MapHeight; y++)
                     {
-                        for (var y = 0; y < Options.MapHeight; y++)
+                        for (var i = 0; i < Options.LayerCount; i++)
                         {
-                            if (Layers[layer][x, y].Autotile == MapAutotiles.AUTOTILE_CLIFF)
+                            if (Layers[i].Tiles[x, y].Autotile == MapAutotiles.AUTOTILE_CLIFF)
                             {
                                 updatedBuffers.UnionWith(CheckAutotile(x, y, surroundingMaps));
                             }
@@ -356,13 +342,13 @@ namespace Intersect.Client.Maps
         private GameTileBuffer[] CheckAutotile(int x, int y, MapBase[,] surroundingMaps)
         {
             var updated = new List<GameTileBuffer>();
-            foreach (var layer in Options.Instance.MapOpts.Layers.All)
+            for (var layer = 0; layer < 5; layer++)
             {
                 if (Autotiles.UpdateAutoTile(x, y, layer, surroundingMaps))
                 {
                     //Find the VBO, update it.
                     var tileBuffer = mTileBufferDict[layer];
-                    var tile = Layers[layer][x, y];
+                    var tile = Layers[layer].Tiles[x, y];
                     if (tile.TilesetTex == null)
                     {
                         continue;
@@ -540,7 +526,7 @@ namespace Intersect.Client.Maps
                     }
 
                     var sound = Audio.AddMapSound(
-                        ((MapSoundAttribute) attribute).File, x, y, Id, true, ((MapSoundAttribute)attribute).LoopInterval, ((MapSoundAttribute) attribute).Distance
+                        ((MapSoundAttribute) attribute).File, x, y, Id, true, ((MapSoundAttribute) attribute).Distance
                     );
 
                     AttributeSounds?.Add(sound);
@@ -555,7 +541,7 @@ namespace Intersect.Client.Maps
         }
 
         //Animations
-        public void AddTileAnimation(Guid animId, int tileX, int tileY, int dir = -1, Entity owner = null)
+        public void AddTileAnimation(Guid animId, int tileX, int tileY, int dir = -1)
         {
             var animBase = AnimationBase.Get(animId);
             if (animBase == null)
@@ -563,8 +549,8 @@ namespace Intersect.Client.Maps
                 return;
             }
 
-            var anim = new MapAnimation(animBase, tileX, tileY, dir, owner);
-            LocalAnimations.TryAdd(anim.Id, anim);
+            var anim = new MapAnimation(animBase, tileX, tileY, dir);
+            LocalAnimations.Add(anim);
             anim.SetPosition(
                 GetX() + tileX * Options.TileWidth + Options.TileWidth / 2,
                 GetY() + tileY * Options.TileHeight + Options.TileHeight / 2, tileX, tileY, Id, dir
@@ -574,24 +560,21 @@ namespace Intersect.Client.Maps
         private void HideActiveAnimations()
         {
             LocalEntities?.Values.ToList().ForEach(entity => entity?.ClearAnimations(null));
-            foreach (var anim in LocalAnimations)
-            {
-                anim.Value?.Dispose();
-            }
+            LocalAnimations?.ForEach(animation => animation?.Dispose());
             LocalAnimations?.Clear();
             ClearMapAttributes();
         }
 
         public void BuildVBOs()
         {
-            foreach (var layer in Options.Instance.MapOpts.Layers.All)
+            for (var i = 0; i < Options.LayerCount; i++)
             {
-                mTileBuffers[layer] = DrawMapLayer(layer, GetX(), GetY());
+                mTileBuffers[i] = DrawMapLayer(i, GetX(), GetY());
                 for (var y = 0; y < 3; y++)
                 {
-                    for (var z = 0; z < mTileBuffers[layer][y].Length; z++)
+                    for (var z = 0; z < mTileBuffers[i][y].Length; z++)
                     {
-                        mTileBuffers[layer][y][z].SetData();
+                        mTileBuffers[i][y][z].SetData();
                     }
                 }
             }
@@ -599,20 +582,21 @@ namespace Intersect.Client.Maps
 
         public void DestroyVBOs()
         {
-            foreach (var layer in Options.Instance.MapOpts.Layers.All)
+            for (var i = 0; i < Options.LayerCount; i++)
             {
                 for (var y = 0; y < 3; y++)
                 {
-                    if (mTileBuffers[layer][y] != null)
+                    if (mTileBuffers[i][y] != null)
                     {
-                        for (var z = 0; z < mTileBuffers[layer][y].Length; z++)
+                        for (var z = 0; z < mTileBuffers[i][y].Length; z++)
                         {
-                            mTileBuffers[layer][y][z].Dispose();
+                            mTileBuffers[i][y][z].Dispose();
                         }
                     }
                 }
-                mTileBufferDict[layer]?.Clear();
+                mTileBufferDict[i]?.Clear();
             }
+
             mTileBuffers = null;
         }
 
@@ -630,30 +614,33 @@ namespace Intersect.Client.Maps
                 return;
             }
 
-            if (mTileBuffers[Options.Instance.MapOpts.Layers.All[0]][0] == null)
+            if (mTileBuffers[0][0] == null)
             {
                 BuildVBOs();
             }
 
-            var drawLayers = Options.Instance.MapOpts.Layers.LowerLayers;
+            var drawLayerStart = 0;
+            var drawLayerEnd = 2;
 
             if (layer == 1)
             {
-                drawLayers = Options.Instance.MapOpts.Layers.MiddleLayers;
+                drawLayerStart = 3;
+                drawLayerEnd = 3;
             }
 
             if (layer == 2)
             {
-                drawLayers = Options.Instance.MapOpts.Layers.UpperLayers;
+                drawLayerStart = 4;
+                drawLayerEnd = 4;
             }
 
-            foreach (var drawLayer in drawLayers)
+            for (var x = drawLayerStart; x <= drawLayerEnd; x++)
             {
-                if (mTileBuffers[drawLayer][Globals.AnimFrame] != null)
+                if (mTileBuffers[x][Globals.AnimFrame] != null)
                 {
-                    for (var i = 0; i < mTileBuffers[drawLayer][Globals.AnimFrame].Length; i++)
+                    for (var i = 0; i < mTileBuffers[x][Globals.AnimFrame].Length; i++)
                     {
-                        Graphics.Renderer.DrawTileBuffer(mTileBuffers[drawLayer][Globals.AnimFrame][i]);
+                        Graphics.Renderer.DrawTileBuffer(mTileBuffers[x][Globals.AnimFrame][i]);
                     }
                 }
             }
@@ -661,31 +648,28 @@ namespace Intersect.Client.Maps
 
         public void DrawItemsAndLights()
         {
-            // Draw map item icons.
-            foreach (var itemCollection in MapItems)
+            //Draw Map Items
+            foreach (var item in MapItems)
             {
-                var tileX = itemCollection.Key % Options.MapWidth;
-                var tileY = (int)Math.Floor(itemCollection.Key / (float)Options.MapWidth);
-                var tileItems = itemCollection.Value;
-                
-                // Loop through this in reverse to match client/server display and pick-up order.
-                for (var index = tileItems.Count -1; index >= 0; index--)
+                // Are we allowed to see and pick this item up?
+                if (!item.Value.VisibleToAll && item.Value.Owner != Globals.Me.Id && !Globals.Me.IsInMyParty(item.Value.Owner))
                 {
-                    var x = GetX() + tileX * Options.TileWidth;
-                    var y = GetY() + tileY * Options.TileHeight;
+                    // This item does not apply to us!
+                    continue;
+                }
 
-                    // Set up all information we need to draw this name.
-                    var itemBase = ItemBase.Get(tileItems[index].ItemId);
-
+                var itemBase = ItemBase.Get(item.Value.ItemId);
+                if (itemBase != null)
+                {
                     var itemTex = Globals.ContentManager.GetTexture(GameContentManager.TextureType.Item, itemBase.Icon);
                     if (itemTex != null)
                     {
                         Graphics.DrawGameTexture(
                             itemTex, new FloatRect(0, 0, itemTex.GetWidth(), itemTex.GetHeight()),
                             new FloatRect(
-                                x, y,
+                                GetX() + item.Value.X * Options.TileWidth, GetY() + item.Value.Y * Options.TileHeight,
                                 Options.TileWidth, Options.TileHeight
-                            ), itemBase.Color
+                            ), Color.White
                         );
                     }
                 }
@@ -701,67 +685,8 @@ namespace Intersect.Client.Maps
             }
         }
 
-        /// <summary>
-        /// Draws all names of the items on the tile the user is hovering over.
-        /// </summary>
-        public void DrawItemNames()
-        {
-            // Get where our mouse is located and convert it to a tile based location.
-            var mousePos = Graphics.ConvertToWorldPoint(
-                    Globals.InputManager.GetMousePosition()
-            );
-            var x = (int)(mousePos.X - (int)GetX()) / Options.TileWidth;
-            var y = (int)(mousePos.Y - (int)GetY()) / Options.TileHeight;
-            var mapId = Id;
-
-            // Is this an actual location on this map?
-            if (Globals.Me.GetRealLocation(ref x, ref y, ref mapId))
-            {
-                // Apparently it is! Do we have any items to render here?
-                var tileItems = new List<MapItemInstance>();
-                if (MapItems.TryGetValue(y * Options.MapWidth + x, out tileItems))
-                {
-                    var baseOffset = 0;
-                    // Loop through this in reverse to match client/server display and pick-up order.
-                    for (var index = tileItems.Count - 1; index >= 0; index--)
-                    {
-                        // Set up all information we need to draw this name.
-                        var itemBase = ItemBase.Get(tileItems[index].ItemId);
-                        var name = tileItems[index].Base.Name;
-                        var quantity = tileItems[index].Quantity;
-                        var rarity = itemBase.Rarity;
-                        if (tileItems[index].Quantity > 1)
-                        {
-                            name = Localization.Strings.General.MapItemStackable.ToString(name, Strings.FormatQuantityAbbreviated(quantity));
-                        }
-                        var color = CustomColors.Items.MapRarities.ContainsKey(rarity)
-                            ? CustomColors.Items.MapRarities[rarity]
-                            : new LabelColor(Color.White, Color.Black, new Color(100, 0, 0, 0));
-                        var textSize = Graphics.Renderer.MeasureText(name, Graphics.EntityNameFont, 1);
-                        var offsetY = (baseOffset * textSize.Y);
-                        var destX = GetX() + (int)Math.Ceiling(((x * Options.TileWidth) + (Options.TileWidth / 2)) - (textSize.X / 2));
-                        var destY = GetY() + (int)Math.Ceiling(((y * Options.TileHeight) - ((Options.TileHeight / 3) + textSize.Y))) - offsetY;
-
-                        // Do we need to draw a background?
-                        if (color.Background != Color.Transparent)
-                        {
-                            Graphics.DrawGameTexture(
-                                Graphics.Renderer.GetWhiteTexture(), new FloatRect(0, 0, 1, 1),
-                                new FloatRect(destX - 4, destY, textSize.X + 8, textSize.Y), color.Background
-                            );
-                        }
-
-                        // Finaly, draw the actual name!
-                        Graphics.Renderer.DrawString(name, Graphics.EntityNameFont, destX, destY, 1, color.Name, true, null, color.Outline);
-
-                        baseOffset++;
-                    }
-                }
-            }
-        }
-
         private void DrawAutoTile(
-            string layerName,
+            int layerNum,
             float destX,
             float destY,
             int quarterNum,
@@ -776,7 +701,7 @@ namespace Intersect.Client.Maps
             int yOffset = 0, xOffset = 0;
 
             // calculate the offset
-            switch (Layers[layerName][x, y].Autotile)
+            switch (Layers[layerNum].Tiles[x, y].Autotile)
             {
                 case MapAutotiles.AUTOTILE_WATERFALL:
                     yOffset = (forceFrame - 1) * Options.TileHeight;
@@ -803,8 +728,8 @@ namespace Intersect.Client.Maps
             {
                 if (!buffer.UpdateTile(
                     tileset, destX, destY,
-                    (int) Autotiles.Layers[layerName][x, y].QuarterTile[quarterNum].X + xOffset,
-                    (int) Autotiles.Layers[layerName][x, y].QuarterTile[quarterNum].Y + yOffset,
+                    (int) Autotiles.Autotile[x, y].Layer[layerNum].QuarterTile[quarterNum].X + xOffset,
+                    (int) Autotiles.Autotile[x, y].Layer[layerNum].QuarterTile[quarterNum].Y + yOffset,
                     Options.TileWidth / 2, Options.TileHeight / 2
                 ))
                 {
@@ -815,8 +740,8 @@ namespace Intersect.Client.Maps
             {
                 if (!buffer.AddTile(
                     tileset, destX, destY,
-                    (int) Autotiles.Layers[layerName][x, y].QuarterTile[quarterNum].X + xOffset,
-                    (int) Autotiles.Layers[layerName][x, y].QuarterTile[quarterNum].Y + yOffset,
+                    (int) Autotiles.Autotile[x, y].Layer[layerNum].QuarterTile[quarterNum].X + xOffset,
+                    (int) Autotiles.Autotile[x, y].Layer[layerNum].QuarterTile[quarterNum].Y + yOffset,
                     Options.TileWidth / 2, Options.TileHeight / 2
                 ))
                 {
@@ -825,20 +750,15 @@ namespace Intersect.Client.Maps
             }
         }
 
-        private GameTileBuffer[][] DrawMapLayer(string layerName, float xoffset = 0, float yoffset = 0)
+        private GameTileBuffer[][] DrawMapLayer(int layer, float xoffset = 0, float yoffset = 0)
         {
             var tileBuffers = new Dictionary<object, GameTileBuffer[]>();
-
-            if (!Layers.ContainsKey(layerName))
-            {
-                return null;
-            }
 
             for (var x = 0; x < Options.MapWidth; x++)
             {
                 for (var y = 0; y < Options.MapHeight; y++)
                 {
-                    var tile = Layers[layerName][x, y];
+                    var tile = Layers[layer].Tiles[x, y];
                     if (tile.TilesetTex == null)
                     {
                         continue;
@@ -875,7 +795,7 @@ namespace Intersect.Client.Maps
                         tileBuffers.Add(platformTex, buffers);
                     }
 
-                    switch (Autotiles.Layers[layerName][x, y].RenderState)
+                    switch (Autotiles.Autotile[x, y].Layer[layer].RenderState)
                     {
                         case MapAutotiles.RENDER_STATE_NORMAL:
                             for (var i = 0; i < 3; i++)
@@ -883,8 +803,8 @@ namespace Intersect.Client.Maps
                                 var buffer = buffers[i];
                                 if (!buffer.AddTile(
                                     tilesetTex, x * Options.TileWidth + xoffset, y * Options.TileHeight + yoffset,
-                                    Layers[layerName][x, y].X * Options.TileWidth,
-                                    Layers[layerName][x, y].Y * Options.TileHeight, Options.TileWidth,
+                                    Layers[layer].Tiles[x, y].X * Options.TileWidth,
+                                    Layers[layer].Tiles[x, y].Y * Options.TileHeight, Options.TileWidth,
                                     Options.TileHeight
                                 ))
                                 {
@@ -897,23 +817,23 @@ namespace Intersect.Client.Maps
                             for (var i = 0; i < 3; i++)
                             {
                                 DrawAutoTile(
-                                    layerName, x * Options.TileWidth + xoffset, y * Options.TileHeight + yoffset, 1, x, y,
+                                    layer, x * Options.TileWidth + xoffset, y * Options.TileHeight + yoffset, 1, x, y,
                                     i, tilesetTex, buffers[i]
                                 );
 
                                 DrawAutoTile(
-                                    layerName, x * Options.TileWidth + Options.TileWidth / 2 + xoffset,
+                                    layer, x * Options.TileWidth + Options.TileWidth / 2 + xoffset,
                                     y * Options.TileHeight + yoffset, 2, x, y, i, tilesetTex, buffers[i]
                                 );
 
                                 DrawAutoTile(
-                                    layerName, x * Options.TileWidth + xoffset,
+                                    layer, x * Options.TileWidth + xoffset,
                                     y * Options.TileHeight + Options.TileHeight / 2 + yoffset, 3, x, y, i, tilesetTex,
                                     buffers[i]
                                 );
 
                                 DrawAutoTile(
-                                    layerName, +x * Options.TileWidth + Options.TileWidth / 2 + xoffset,
+                                    layer, +x * Options.TileWidth + Options.TileWidth / 2 + xoffset,
                                     y * Options.TileHeight + Options.TileHeight / 2 + yoffset, 4, x, y, i, tilesetTex,
                                     buffers[i]
                                 );
@@ -939,7 +859,7 @@ namespace Intersect.Client.Maps
                 }
             }
 
-            mTileBufferDict[layerName] = tileBuffers;
+            mTileBufferDict[layer] = tileBuffers;
 
             return outputBuffers;
         }

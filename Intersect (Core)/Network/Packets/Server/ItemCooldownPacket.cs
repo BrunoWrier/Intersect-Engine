@@ -1,19 +1,13 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class ItemCooldownPacket : IntersectPacket
+
+    public class ItemCooldownPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public ItemCooldownPacket()
-        {
-        }
 
-
-        [Key(0)]
+        //Item Id / Time Remaining (Since we cannot expect all clients to have perfect system times)
         public Dictionary<Guid, long> ItemCds;
 
         public ItemCooldownPacket(Dictionary<Guid, long> itemCds)

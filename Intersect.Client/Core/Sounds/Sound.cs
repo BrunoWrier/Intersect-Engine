@@ -16,15 +16,11 @@ namespace Intersect.Client.Core.Sounds
 
         protected bool mLoop;
 
-        protected int mLoopInterval;
-
         protected GameAudioInstance mSound;
 
         protected float mVolume;
 
-        private long mStoppedTime = -1;
-
-        public Sound(string filename, bool loop, int loopInterval)
+        public Sound(string filename, bool loop)
         {
             if (String.IsNullOrEmpty(filename))
             {
@@ -33,13 +29,11 @@ namespace Intersect.Client.Core.Sounds
 
             mFilename = GameContentManager.RemoveExtension(filename).ToLower();
             mLoop = loop;
-            mLoopInterval = loopInterval;
             var sound = Globals.ContentManager.GetSound(mFilename);
             if (sound != null)
             {
                 mSound = sound.CreateInstance();
-                mSound.IsLooping = mLoop && mLoopInterval <= 0;
-               
+                mSound.IsLooping = mLoop;
                 mSound.SetVolume(Globals.Database.SoundVolume);
                 mSound.Play();
                 Loaded = true;
@@ -66,23 +60,7 @@ namespace Intersect.Client.Core.Sounds
                 return false;
             }
 
-            if (mLoop && mLoopInterval > 0 && mSound?.State == GameAudioInstance.AudioInstanceState.Stopped)
-            {
-                if (mStoppedTime == -1)
-                {
-                    mStoppedTime = Globals.System.GetTimeMs();
-                }
-                else
-                {
-                    if (mStoppedTime + mLoopInterval < Globals.System.GetTimeMs())
-                    {
-                        mSound.Play();
-                        mStoppedTime = -1;
-                    }
-                }
-                return true;
-            }
-            else if (mLoop || mSound?.State != GameAudioInstance.AudioInstanceState.Stopped)
+            if (mLoop || mSound?.State != GameAudioInstance.AudioInstanceState.Stopped)
             {
                 return true;
             }

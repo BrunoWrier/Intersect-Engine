@@ -5,6 +5,8 @@ using System.Globalization;
 using System.Net.Http;
 using System.Web.Http.Routing;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect.Server.Web.RestApi.Payloads
@@ -52,8 +54,8 @@ namespace Intersect.Server.Web.RestApi.Payloads
             public bool Match(
                 HttpRequestMessage request,
                 IHttpRoute route,
-                string parameterName,
-                IDictionary<string, object> values,
+                [NotNull] string parameterName,
+                [NotNull] IDictionary<string, object> values,
                 HttpRouteDirection routeDirection
             )
             {

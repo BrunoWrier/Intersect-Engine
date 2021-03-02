@@ -1,4 +1,5 @@
-﻿
+﻿using JetBrains.Annotations;
+
 using Microsoft.Owin.Logging;
 
 namespace Intersect.Server.Web.RestApi.Logging
@@ -8,7 +9,7 @@ namespace Intersect.Server.Web.RestApi.Logging
     {
 
         /// <inheritdoc />
-        public ILogger Create(string name)
+        public ILogger Create([NotNull] string name)
         {
             return new IntersectLogger(name);
         }

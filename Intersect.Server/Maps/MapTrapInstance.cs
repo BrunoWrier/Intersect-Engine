@@ -11,7 +11,6 @@ namespace Intersect.Server.Classes.Maps
 
     public class MapTrapInstance
     {
-        public Guid Id { get; } = Guid.NewGuid();
 
         private long Duration;
 

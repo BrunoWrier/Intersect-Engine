@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Client
+﻿namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class LoginPacket : IntersectPacket
+
+    public class LoginPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public LoginPacket()
-        {
-        }
 
         public LoginPacket(string username, string password)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Client
             Password = password;
         }
 
-        [Key(0)]
         public string Username { get; set; }
 
-        [Key(1)]
         public string Password { get; set; }
 
     }

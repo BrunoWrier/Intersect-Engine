@@ -1,16 +1,10 @@
 ﻿using Intersect.Enums;
-using MessagePack;
 
 namespace Intersect.Admin.Actions
 {
-    [MessagePackObject]
+
     public class MuteAction : AdminAction
     {
-        //Parameterless Constructor for MessagePack
-        public MuteAction()
-        {
-
-        }
 
         public MuteAction(string name, int durationDays, string reason, bool banIp)
         {
@@ -20,19 +14,14 @@ namespace Intersect.Admin.Actions
             BanIp = banIp;
         }
 
-        [Key(1)]
         public override AdminActions Action { get; } = AdminActions.Mute;
 
-        [Key(2)]
         public string Name { get; set; }
 
-        [Key(3)]
         public int DurationDays { get; set; }
 
-        [Key(4)]
         public string Reason { get; set; }
 
-        [Key(5)]
         public bool BanIp { get; set; }
 
     }

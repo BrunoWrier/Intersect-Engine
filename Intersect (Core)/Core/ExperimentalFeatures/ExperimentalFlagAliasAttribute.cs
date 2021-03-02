@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Core.ExperimentalFeatures
 {
 
@@ -7,7 +9,7 @@ namespace Intersect.Core.ExperimentalFeatures
     public class ExperimentalFlagAliasAttribute : Attribute
     {
 
-        public ExperimentalFlagAliasAttribute(string of)
+        public ExperimentalFlagAliasAttribute([NotNull] string of)
         {
             if (string.IsNullOrWhiteSpace(of))
             {
@@ -17,6 +19,7 @@ namespace Intersect.Core.ExperimentalFeatures
             Of = of;
         }
 
+        [NotNull]
         public string Of { get; }
 
     }

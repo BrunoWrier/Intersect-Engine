@@ -1,10 +1,14 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Logging.Output
 {
-    // TODO: Figure out what doesn't need to be duplicated between this and ConsoleOutput
+
     public class ConciseConsoleOutput : ILogOutput
     {
+
+        private const string TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.fff";
 
         public ConciseConsoleOutput(LogLevel logLevel = LogLevel.All)
         {
@@ -40,10 +44,10 @@ namespace Intersect.Logging.Output
         }
 
         private void InternalWrite(
-            LogConfiguration configuration,
+            [NotNull] LogConfiguration configuration,
             LogLevel logLevel,
             Exception exception,
-            string format,
+            [NotNull] string format,
             params object[] args
         )
         {

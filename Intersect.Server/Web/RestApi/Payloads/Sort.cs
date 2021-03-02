@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Web.RestApi.Payloads
 {
 
@@ -12,7 +14,7 @@ namespace Intersect.Server.Web.RestApi.Payloads
 
         public SortDirection Direction { get; set; }
 
-        public static Sort From(string sortBy, SortDirection sortDirection)
+        public static Sort From([NotNull] string sortBy, SortDirection sortDirection)
         {
             return new Sort
             {

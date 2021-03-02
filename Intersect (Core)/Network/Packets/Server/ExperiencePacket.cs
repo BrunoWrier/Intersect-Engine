@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class ExperiencePacket : IntersectPacket
+
+    public class ExperiencePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public ExperiencePacket()
-        {
-        }
 
         public ExperiencePacket(long exp, long tnl)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Server
             ExperienceToNextLevel = tnl;
         }
 
-        [Key(0)]
         public long Experience { get; set; }
 
-        [Key(1)]
         public long ExperienceToNextLevel { get; set; }
 
     }

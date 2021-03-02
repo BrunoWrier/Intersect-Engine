@@ -1,9 +1,7 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class SpellPacket : IntersectPacket
+
+    public class SpellPacket : CerasPacket
     {
 
     }

@@ -6,7 +6,6 @@ using Intersect.Client.Entities;
 using Intersect.Client.Framework.Audio;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.General;
-using Intersect.Compression;
 using Intersect.Logging;
 
 namespace Intersect.Client.Core
@@ -108,18 +107,6 @@ namespace Intersect.Client.Core
                 {
                     sGameSounds.RemoveAt(i);
                 }
-            }
-
-            // Update our pack sound cache if we have any packs loaded.
-            if (Globals.ContentManager.SoundPacks != null)
-            {
-                Globals.ContentManager.SoundPacks.UpdateCache();
-            }
-
-            // Update our pack music cache if we have any packs loaded.
-            if (Globals.ContentManager.MusicPacks != null)
-            {
-                Globals.ContentManager.MusicPacks.UpdateCache();
             }
         }
 
@@ -231,7 +218,6 @@ namespace Intersect.Client.Core
             int y,
             Guid mapId,
             bool loop,
-            int loopInterval,
             int distance,
             Entity parent = null
         )
@@ -241,7 +227,7 @@ namespace Intersect.Client.Core
                 return null;
             }
 
-            var sound = new MapSound(filename, x, y, mapId, loop, loopInterval, distance, parent);
+            var sound = new MapSound(filename, x, y, mapId, loop, distance, parent);
             sGameSounds?.Add(sound);
 
             return sound;
@@ -254,7 +240,7 @@ namespace Intersect.Client.Core
                 return null;
             }
 
-            var sound = new Sound(filename, loop, 0);
+            var sound = new Sound(filename, loop);
             sGameSounds?.Add(sound);
 
             return sound;

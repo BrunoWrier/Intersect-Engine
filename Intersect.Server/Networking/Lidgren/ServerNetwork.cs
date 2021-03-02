@@ -2,34 +2,25 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Security.Cryptography;
-using Amib.Threading;
+
 using Intersect.Logging;
 using Intersect.Network;
 using Intersect.Network.Events;
 using Intersect.Network.Lidgren;
-using Intersect.Plugins.Interfaces;
-using Intersect.Server.Core;
 using Intersect.Server.Entities;
+
+using JetBrains.Annotations;
 
 using Lidgren.Network;
 
 namespace Intersect.Server.Networking.Lidgren
 {
-
-    // TODO: Migrate to a proper service
-    internal class ServerNetwork : AbstractNetwork, IServer
+    public class ServerNetwork : AbstractNetwork, IServer
     {
-        /// <summary>
-        /// This is our smart thread pool which we use to handle packet processing and packet sending. Min/Max Number of Threads & Idle Timeouts are set via server config.
-        /// </summary>
-        public static SmartThreadPool Pool = new SmartThreadPool(Options.Instance.Processing.NetworkThreadIdleTimeout, Options.Instance.Processing.MaxNetworkThreads, Options.Instance.Processing.MinNetworkThreads);
-
-        internal ServerNetwork(IServerContext context, INetworkHelper networkHelper, NetworkConfiguration configuration, RSAParameters rsaParameters) : base(
-            networkHelper, configuration
+        public ServerNetwork([NotNull] NetworkConfiguration configuration, RSAParameters rsaParameters) : base(
+            configuration
         )
         {
-            Context = context ?? throw new ArgumentNullException(nameof(context));
-
             Guid = Guid.NewGuid();
 
             var lidgrenInterface = new LidgrenInterface(this, typeof(NetServer), rsaParameters);
@@ -40,8 +31,6 @@ namespace Intersect.Server.Networking.Lidgren
             lidgrenInterface.OnConnectionRequested += HandleConnectionRequested;
             AddNetworkLayerInterface(lidgrenInterface);
         }
-
-        private IServerContext Context { get; }
 
         public HandleConnectionEvent OnConnected { get; set; }
 
@@ -57,18 +46,18 @@ namespace Intersect.Server.Networking.Lidgren
         }
 
         protected virtual void HandleInterfaceOnConnected(
-            INetworkLayerInterface sender,
-            ConnectionEventArgs connectionEventArgs
+            [NotNull] INetworkLayerInterface sender,
+            [NotNull] ConnectionEventArgs connectionEventArgs
         )
         {
             Log.Info($"Connected [{connectionEventArgs.Connection?.Guid}].");
-            Client.CreateBeta4Client(Context, connectionEventArgs.Connection);
+            Client.CreateBeta4Client(connectionEventArgs.Connection);
             OnConnected?.Invoke(sender, connectionEventArgs);
         }
 
         protected virtual void HandleInterfaceOnConnectonApproved(
-            INetworkLayerInterface sender,
-            ConnectionEventArgs connectionEventArgs
+            [NotNull] INetworkLayerInterface sender,
+            [NotNull] ConnectionEventArgs connectionEventArgs
         )
         {
             Log.Info($"Connection approved [{connectionEventArgs.Connection?.Guid}].");
@@ -76,8 +65,8 @@ namespace Intersect.Server.Networking.Lidgren
         }
 
         protected virtual void HandleInterfaceOnDisconnected(
-            INetworkLayerInterface sender,
-            ConnectionEventArgs connectionEventArgs
+            [NotNull] INetworkLayerInterface sender,
+            [NotNull] ConnectionEventArgs connectionEventArgs
         )
         {
             Log.Info($"Disconnected [{connectionEventArgs.Connection?.Guid}].");
@@ -102,6 +91,7 @@ namespace Intersect.Server.Networking.Lidgren
             }
             catch (Exception exception)
             {
+                Log.Error(exception);
             }
         }
 
@@ -112,22 +102,23 @@ namespace Intersect.Server.Networking.Lidgren
                 return false;
             }
 
-            return true;
+            return string.IsNullOrEmpty(Database.PlayerData.Ban.CheckBan(connection.Ip.Trim())) &&
+                   Options.Instance.SecurityOpts.CheckIp(connection.Ip.Trim());
         }
 
-        public override bool Send(IPacket packet, TransmissionMode mode = TransmissionMode.All)
+        public override bool Send(IPacket packet)
         {
-            return Send(Connections, packet, mode);
+            return Send(Connections, packet);
         }
 
-        public override bool Send(IConnection connection, IPacket packet, TransmissionMode mode = TransmissionMode.All)
+        public override bool Send(IConnection connection, IPacket packet)
         {
-            return Send(new[] {connection}, packet, mode);
+            return Send(new[] {connection}, packet);
         }
 
-        public override bool Send(ICollection<IConnection> connections, IPacket packet, TransmissionMode mode = TransmissionMode.All)
+        public override bool Send(ICollection<IConnection> connections, IPacket packet)
         {
-            SendPacket(packet, connections, mode);
+            SendPacket(packet, connections, TransmissionMode.All);
 
             return true;
         }

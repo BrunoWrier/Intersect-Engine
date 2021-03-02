@@ -7,6 +7,8 @@ using System.Web.Http.Routing;
 
 using Intersect.Server.Web.RestApi.Routes;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Web.RestApi.RouteProviders
 {
 
@@ -17,17 +19,20 @@ namespace Intersect.Server.Web.RestApi.RouteProviders
         {
         }
 
-        public VersionedRouteProvider(string rootNamespace, string prefix = "api")
+        public VersionedRouteProvider([NotNull] string rootNamespace, [NotNull] string prefix = "api")
         {
             RootNamespace = rootNamespace;
             Prefix = prefix;
         }
 
+        [NotNull]
         public static string DefaultRootNamespace =>
             typeof(RootInfoController).Namespace ?? throw new InvalidOperationException();
 
+        [NotNull]
         public string RootNamespace { get; }
 
+        [NotNull]
         public string Prefix { get; }
 
         protected override IReadOnlyList<IDirectRouteFactory> GetActionRouteFactories(
@@ -74,7 +79,7 @@ namespace Intersect.Server.Web.RestApi.RouteProviders
             );
         }
 
-        protected override string GetRoutePrefix(HttpControllerDescriptor controllerDescriptor)
+        protected override string GetRoutePrefix([NotNull] HttpControllerDescriptor controllerDescriptor)
         {
             var prefixBuilder = new StringBuilder(Prefix);
 

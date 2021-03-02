@@ -2,6 +2,7 @@
 using System.Linq;
 
 using Intersect.Server.Database.PlayerData;
+using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Utilities;
 
@@ -20,7 +21,6 @@ namespace Intersect.Server.Notifications
             Body = Body.Replace("{{expiration}}", Options.PasswordResetExpirationMinutes.ToString());
             user.PasswordResetCode = resetCode;
             user.PasswordResetTime = DateTime.UtcNow.AddMinutes(Options.PasswordResetExpirationMinutes);
-            user.Save();
         }
 
         private string GenerateResetCode(int length)

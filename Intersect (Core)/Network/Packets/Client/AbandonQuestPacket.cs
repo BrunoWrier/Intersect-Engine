@@ -1,23 +1,16 @@
-﻿using MessagePack;
-using System;
+﻿using System;
 
 namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class AbandonQuestPacket : IntersectPacket
-    {
-        //Parameterless Constructor for MessagePack
-        public AbandonQuestPacket()
-        {
 
-        }
+    public class AbandonQuestPacket : CerasPacket
+    {
 
         public AbandonQuestPacket(Guid questId)
         {
             QuestId = questId;
         }
 
-        [Key(0)]
         public Guid QuestId { get; set; }
 
     }

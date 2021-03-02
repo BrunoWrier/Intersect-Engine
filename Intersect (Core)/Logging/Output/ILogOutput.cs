@@ -1,5 +1,7 @@
 ﻿using System;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Logging.Output
 {
 
@@ -8,28 +10,28 @@ namespace Intersect.Logging.Output
 
         LogLevel LogLevel { get; set; }
 
-        void Write(LogConfiguration configuration, LogLevel logLevel, string message);
+        void Write([NotNull] LogConfiguration configuration, LogLevel logLevel, [NotNull] string message);
 
         void Write(
-            LogConfiguration configuration,
+            [NotNull] LogConfiguration configuration,
             LogLevel logLevel,
-            string format,
-            params object[] args
+            [NotNull] string format,
+            [NotNull] params object[] args
         );
 
         void Write(
-            LogConfiguration configuration,
+            [NotNull] LogConfiguration configuration,
             LogLevel logLevel,
-            Exception exception,
-            string message
+            [NotNull] Exception exception,
+            [NotNull] string message
         );
 
         void Write(
-            LogConfiguration configuration,
+            [NotNull] LogConfiguration configuration,
             LogLevel logLevel,
-            Exception exception,
-            string format,
-            params object[] args
+            [NotNull] Exception exception,
+            [NotNull] string format,
+            [NotNull] params object[] args
         );
 
     }

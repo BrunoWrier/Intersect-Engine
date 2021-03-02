@@ -4,20 +4,24 @@ using System.Runtime.Remoting;
 using System.Text;
 using System.Threading.Tasks;
 
+using JetBrains.Annotations;
+
 namespace Intersect.IO
 {
 
     public class ConsoleWriter : TextWriter
     {
 
-        public ConsoleWriter(ConsoleContext context, TextWriter textWriter)
+        public ConsoleWriter([NotNull] ConsoleContext context, [NotNull] TextWriter textWriter)
         {
             Context = context;
             TextWriter = textWriter;
         }
 
+        [NotNull]
         protected ConsoleContext Context { get; }
 
+        [NotNull]
         internal TextWriter TextWriter { get; }
 
         internal bool SkipNextWriteChar { get; set; }

@@ -5,6 +5,8 @@ using System.Linq.Expressions;
 
 using Intersect.Server.Web.RestApi.Payloads;
 
+using JetBrains.Annotations;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace Intersect.Server.Extensions
@@ -14,20 +16,20 @@ namespace Intersect.Server.Extensions
     {
 
         public static IQueryable<TValue> Sort<TValue>(
-            this IQueryable<TValue> queryable,
+            [NotNull] this IQueryable<TValue> queryable,
             IReadOnlyCollection<Sort> sort
         )
         {
             return DoSort(queryable, sort);
         }
 
-        public static bool IsOrdered<TValue>(this IQueryable<TValue> queryable)
+        public static bool IsOrdered<TValue>([NotNull] this IQueryable<TValue> queryable)
         {
             return queryable.Expression.Type == typeof(IOrderedQueryable<TValue>);
         }
 
         public static IOrderedQueryable<TValue> SmartOrderBy<TValue>(
-            this IQueryable<TValue> queryable,
+            [NotNull] this IQueryable<TValue> queryable,
             Sort sort
         )
         {
@@ -37,7 +39,7 @@ namespace Intersect.Server.Extensions
         }
 
         public static IOrderedQueryable<TValue> SmartThenBy<TValue>(
-            this IOrderedQueryable<TValue> queryable,
+            [NotNull] this IOrderedQueryable<TValue> queryable,
             Sort sort
         )
         {
@@ -46,7 +48,7 @@ namespace Intersect.Server.Extensions
                 : queryable.ThenByDescending(entity => EF.Property<object>(entity, sort.By));
         }
 
-        public static IQueryable<TValue> SmartSort<TValue>(this IQueryable<TValue> queryable, Sort sort)
+        public static IQueryable<TValue> SmartSort<TValue>([NotNull] this IQueryable<TValue> queryable, Sort sort)
         {
             return sort.Direction == SortDirection.Ascending
                 ? SmartSortAscending(queryable, sort)
@@ -54,7 +56,7 @@ namespace Intersect.Server.Extensions
         }
 
         public static IQueryable<TValue> SmartSortAscending<TValue>(
-            this IQueryable<TValue> queryable,
+            [NotNull] this IQueryable<TValue> queryable,
             Sort sort
         )
         {
@@ -64,7 +66,7 @@ namespace Intersect.Server.Extensions
         }
 
         public static IQueryable<TValue> SmartSortDescending<TValue>(
-            this IQueryable<TValue> queryable,
+            [NotNull] this IQueryable<TValue> queryable,
             Sort sort
         )
         {
@@ -76,7 +78,7 @@ namespace Intersect.Server.Extensions
         }
 
         public static IQueryable<TValue> DoSort<TValue>(
-            IQueryable<TValue> queryable,
+            [NotNull] IQueryable<TValue> queryable,
             IReadOnlyCollection<Sort> sort
         )
         {

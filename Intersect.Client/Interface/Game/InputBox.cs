@@ -10,7 +10,7 @@ using Intersect.Client.Localization;
 namespace Intersect.Client.Interface.Game
 {
 
-    public class InputBox : Base
+    public class InputBox
     {
 
         public enum InputType
@@ -58,8 +58,6 @@ namespace Intersect.Client.Interface.Game
 
         public float Value;
 
-        public new string Name = "InputBox";
-
         public InputBox(
             string title,
             string prompt,
@@ -68,10 +66,9 @@ namespace Intersect.Client.Interface.Game
             EventHandler okayYesSubmitClicked,
             EventHandler cancelClicked,
             object userData,
-            int quantity = 0,
             Base parent = null,
             GameContentManager.UI stage = GameContentManager.UI.InGame
-        ) : base(parent)
+        )
         {
             if (parent == null)
             {
@@ -88,11 +85,11 @@ namespace Intersect.Client.Interface.Game
             mMyWindow = new WindowControl(parent, title, modal, "InputBox");
             mMyWindow.BeforeDraw += _myWindow_BeforeDraw;
             mMyWindow.DisableResizing();
+            Interface.InputBlockingElements.Add(mMyWindow);
 
             mNumericTextboxBg = new ImagePanel(mMyWindow, "Textbox");
             mNumericTextbox = new TextBoxNumeric(mNumericTextboxBg, "TextboxText");
             mNumericTextbox.SubmitPressed += TextBox_SubmitPressed;
-            mNumericTextbox.Text = quantity.ToString();
             if (inputtype == InputType.NumericInput)
             {
                 mNumericTextbox.Focus();
@@ -129,7 +126,6 @@ namespace Intersect.Client.Interface.Game
             mOkayButton.Clicked += okayBtn_Clicked;
 
             mPromptLabel = new Label(mMyWindow, "PromptLabel");
-            Interface.InputBlockingElements.Add(this);
         }
 
         private void TextBox_SubmitPressed(Base sender, EventArgs arguments)
@@ -226,7 +222,7 @@ namespace Intersect.Client.Interface.Game
             Dispose();
         }
 
-        public void okayBtn_Clicked(Base sender, ClickedEventArgs arguments)
+        void okayBtn_Clicked(Base sender, ClickedEventArgs arguments)
         {
             SubmitInput();
         }
@@ -243,7 +239,10 @@ namespace Intersect.Client.Interface.Game
                 TextValue = mTextbox.Text;
             }
 
-            OkayEventHandler?.Invoke(this, EventArgs.Empty);
+            if (OkayEventHandler != null)
+            {
+                OkayEventHandler(this, EventArgs.Empty);
+            }
 
             Dispose();
         }
@@ -253,8 +252,6 @@ namespace Intersect.Client.Interface.Game
             mMyWindow.Close();
             mMyWindow.Parent.RemoveChild(mMyWindow, false);
             mMyWindow.Dispose();
-
-            base.Hide();
         }
 
     }

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Core.ExperimentalFeatures
 {
 
@@ -10,7 +12,7 @@ namespace Intersect.Core.ExperimentalFeatures
 
         public const string CONFIG_PATH = "resources/config/experiments.config.json";
 
-        private static readonly IDictionary<Type, Guid> mNamespaceIdsByDeclaringType;
+        [NotNull] private static readonly IDictionary<Type, Guid> mNamespaceIdsByDeclaringType;
 
         private static TExperiments mInstance;
 
@@ -19,6 +21,7 @@ namespace Intersect.Core.ExperimentalFeatures
             mNamespaceIdsByDeclaringType = new Dictionary<Type, Guid>();
         }
 
+        [NotNull]
         protected static TExperiments Instance
         {
             get => mInstance ??
@@ -28,7 +31,7 @@ namespace Intersect.Core.ExperimentalFeatures
             set => mInstance = value;
         }
 
-        protected static Guid GetNamespaceIdFor(Type declaringType)
+        protected static Guid GetNamespaceIdFor([NotNull] Type declaringType)
         {
             if (mNamespaceIdsByDeclaringType.TryGetValue(declaringType, out var namespaceId))
             {

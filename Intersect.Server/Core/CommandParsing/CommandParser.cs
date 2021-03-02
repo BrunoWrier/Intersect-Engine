@@ -9,6 +9,8 @@ using Intersect.Server.Core.CommandParsing.Commands;
 using Intersect.Server.Core.CommandParsing.Errors;
 using Intersect.Server.Core.CommandParsing.Tokenization;
 
+using JetBrains.Annotations;
+
 using Newtonsoft.Json;
 
 namespace Intersect.Server.Core.CommandParsing
@@ -21,20 +23,23 @@ namespace Intersect.Server.Core.CommandParsing
         {
         }
 
-        public CommandParser(ParserSettings settings)
+        public CommandParser([NotNull] ParserSettings settings)
         {
             Settings = settings;
             Tokenizer = new Tokenizer(settings.TokenizerSettings);
             Lookup = new Dictionary<string, ICommand>();
         }
 
+        [NotNull]
         public ParserSettings Settings { get; }
 
+        [NotNull]
         public Tokenizer Tokenizer { get; }
 
+        [NotNull]
         private IDictionary<string, ICommand> Lookup { get; }
 
-        public bool Register<TCommand>(params object[] args) where TCommand : ICommand
+        public bool Register<TCommand>([CanBeNull] params object[] args) where TCommand : ICommand
         {
             var commandType = typeof(TCommand);
             if (commandType.IsAbstract || commandType.IsInterface)
@@ -53,7 +58,7 @@ namespace Intersect.Server.Core.CommandParsing
                 );
             }
 
-            if (defaultConstructor.Invoke(args ?? Array.Empty<object>()) is ICommand command)
+            if (defaultConstructor.Invoke(args ?? new object[0]) is ICommand command)
             {
                 return Register(command);
             }
@@ -63,7 +68,7 @@ namespace Intersect.Server.Core.CommandParsing
             );
         }
 
-        public bool Register(ICommand command)
+        public bool Register([NotNull] ICommand command)
         {
             if (Lookup.ContainsKey(command.Name))
             {
@@ -75,12 +80,14 @@ namespace Intersect.Server.Core.CommandParsing
             return true;
         }
 
-        public ICommand Find(string commandName)
+        [CanBeNull]
+        public ICommand Find([NotNull] string commandName)
         {
             return !Lookup.TryGetValue(commandName, out var command) ? null : command;
         }
 
-        public ParserResult Parse(string line)
+        [NotNull]
+        public ParserResult Parse([NotNull] string line)
         {
             var tokens = Tokenizer.Tokenize(line).Select(token => token?.Trim()).Where(token => token != null).ToList();
 
@@ -390,7 +397,8 @@ namespace Intersect.Server.Core.CommandParsing
             return new ParserResult(command, new ArgumentValuesMap(parsed), errors, missing, omitted);
         }
 
-        private ArgumentValuesMap ConstructDefaultArguments(IEnumerable<ICommandArgument> arguments)
+        [CanBeNull]
+        private ArgumentValuesMap ConstructDefaultArguments([NotNull] IEnumerable<ICommandArgument> arguments)
         {
             return new ArgumentValuesMap(
                 arguments.Where(argument => argument != null)
@@ -402,7 +410,8 @@ namespace Intersect.Server.Core.CommandParsing
             );
         }
 
-        private ArgumentValues ConstructDefaultArgument(ICommandArgument argument, bool isImplicit = false)
+        [NotNull]
+        private ArgumentValues ConstructDefaultArgument([NotNull] ICommandArgument argument, bool isImplicit = false)
         {
             var argumentName = argument.ShortName == '\0'
                 ? Settings.PrefixShort + argument.ShortName
@@ -416,9 +425,9 @@ namespace Intersect.Server.Core.CommandParsing
         }
 
         private bool TryParseArgument(
-            Type type,
-            object defaultValue,
-            string source,
+            [NotNull] Type type,
+            [CanBeNull] object defaultValue,
+            [NotNull] string source,
             out object parsed
         )
         {
@@ -577,9 +586,9 @@ namespace Intersect.Server.Core.CommandParsing
         }
 
         private static bool TryParseType(
-            Type type,
-            object defaultValue,
-            string source,
+            [NotNull] Type type,
+            [CanBeNull] object defaultValue,
+            [NotNull] string source,
             out object parsed
         )
         {

@@ -1,14 +1,11 @@
-﻿using MessagePack;
-
-namespace Intersect
+﻿namespace Intersect
 {
-    [MessagePackObject]
+
     public struct Point
     {
-        [Key(0)]
+
         public int X { get; set; }
 
-        [Key(1)]
         public int Y { get; set; }
 
         public Point(int x, int y)

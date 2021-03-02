@@ -1,12 +1,14 @@
 ﻿using System.Web.Http.Dependencies;
 
+using JetBrains.Annotations;
+
 namespace Intersect.Server.Web.RestApi.Services
 {
 
     internal interface IAuthorizedRoutesService
     {
 
-        bool RequiresAuthorization(string endpoint, string method = "GET");
+        bool RequiresAuthorization([NotNull] string endpoint, [NotNull] string method = "GET");
 
     }
 
@@ -14,7 +16,7 @@ namespace Intersect.Server.Web.RestApi.Services
     {
 
         public static IAuthorizedRoutesService GetAuthorizedRoutes(
-            this IDependencyResolver dependencyResolver
+            [NotNull] this IDependencyResolver dependencyResolver
         )
         {
             return dependencyResolver.GetService(typeof(IAuthorizedRoutesService)) as IAuthorizedRoutesService;

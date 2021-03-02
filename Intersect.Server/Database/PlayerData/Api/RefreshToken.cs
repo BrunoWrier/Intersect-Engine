@@ -4,7 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
-using Intersect.Logging;
+
+using JetBrains.Annotations;
 
 using Newtonsoft.Json;
 
@@ -41,91 +42,81 @@ namespace Intersect.Server.Database.PlayerData.Api
         public string Ticket { get; set; }
 
         public static async ValueTask<bool> Add(
-            RefreshToken token,
+            [NotNull] RefreshToken token,
             bool commit = false,
             bool checkForDuplicates = true
         )
         {
-            using (var context = DbInterface.CreatePlayerContext(readOnly: false))
+            lock (DbInterface.GetPlayerContextLock())
             {
-                if (context.RefreshTokens == null)
+                if (DbInterface.GetPlayerContext()?.RefreshTokens == null)
                 {
                     return false;
                 }
-            
-                if (checkForDuplicates)
+            }
+
+            if (checkForDuplicates)
+            {
+                var duplicate = Find(token.Id);
+                if (duplicate != null && !Remove(token.Id, commit))
                 {
-                    var duplicate = Find(token.Id);
-                    if (duplicate != null && !Remove(token.Id, commit))
-                    {
-                        return false;
-                    }
-
-                    var forClient = FindForClient(token.ClientId)?.ToList();
-                    if (forClient != null && !RemoveAll(forClient, commit))
-                    {
-                        return false;
-                    }
-
-                    var forUser = FindForUser(token.UserId)?.ToList();
-                    if (forUser != null && !RemoveAll(forUser, commit))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
 
-                context.RefreshTokens.Add(token);
-                context.ChangeTracker.DetectChanges();
-                context.SaveChanges();
+                var forClient = FindForClient(token.ClientId)?.ToList();
+                if (forClient != null && !RemoveAll(forClient, commit))
+                {
+                    return false;
+                }
 
-                return true;
+                var forUser = FindForUser(token.UserId)?.ToList();
+                if (forUser != null && !RemoveAll(forUser, commit))
+                {
+                    return false;
+                }
             }
+
+            lock (DbInterface.GetPlayerContextLock())
+            {
+                var context = DbInterface.GetPlayerContext();
+                context.RefreshTokens.Add(token);
+                context.SaveChanges();
+            }
+
+            return true;
         }
 
+        [CanBeNull]
         public static RefreshToken Find(Guid id)
         {
-            try
+            lock (DbInterface.GetPlayerContextLock())
             {
-                using (var context = DbInterface.CreatePlayerContext())
-                {
-                    return context?.RefreshTokens?.Find(id);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex);
-                return null;
+                return DbInterface.GetPlayerContext()?.RefreshTokens?.Find(id);
             }
         }
 
-        public static RefreshToken FindForTicket(Guid ticketId)
+        public static RefreshToken FindForTicket([CanBeNull] Guid ticketId)
         {
             if (ticketId == Guid.Empty)
             {
                 return null;
             }
 
-            try
+            lock (DbInterface.GetPlayerContextLock())
             {
-                using (var context = DbInterface.CreatePlayerContext())
+                var playerContext = DbInterface.GetPlayerContext();
+                var refreshToken =
+                    playerContext?.RefreshTokens.FirstOrDefault(queryToken => queryToken.TicketId == ticketId);
+
+                if (refreshToken == null || DateTime.UtcNow < refreshToken.Expires)
                 {
-                    var refreshToken = context?.RefreshTokens.FirstOrDefault(queryToken => queryToken.TicketId == ticketId);
-
-                    if (refreshToken == null || DateTime.UtcNow < refreshToken.Expires)
-                    {
-                        return refreshToken;
-                    }
-
-                    Remove(refreshToken, true);
-
-                    return null;
+                    return refreshToken;
                 }
+
+                Remove(refreshToken, true);
             }
-            catch (Exception ex)
-            {
-                Log.Error(ex);
-                return null;
-            }
+
+            return null;
         }
 
         public static IEnumerable<RefreshToken> FindForClient(Guid clientId)
@@ -135,19 +126,12 @@ namespace Intersect.Server.Database.PlayerData.Api
                 return null;
             }
 
-            try
+            lock (DbInterface.GetPlayerContextLock())
             {
-                using (var context = DbInterface.CreatePlayerContext())
-                {
-                    var tokenQuery = context?.RefreshTokens.Where(queryToken => queryToken.ClientId == clientId);
+                var tokenQuery = DbInterface.GetPlayerContext()
+                    ?.RefreshTokens.Where(queryToken => queryToken.ClientId == clientId);
 
-                    return tokenQuery.AsEnumerable()?.ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex);
-                return null;
+                return tokenQuery.AsEnumerable()?.ToList();
             }
         }
 
@@ -158,46 +142,32 @@ namespace Intersect.Server.Database.PlayerData.Api
                 return null;
             }
 
-            try
+            lock (DbInterface.GetPlayerContextLock())
             {
-                using (var context = DbInterface.CreatePlayerContext())
-                {
-                    var tokenQuery = context?.RefreshTokens.Where(queryToken => queryToken.UserId == userId);
+                var tokenQuery = DbInterface.GetPlayerContext()
+                    ?.RefreshTokens.Where(queryToken => queryToken.UserId == userId);
 
-                    return tokenQuery.AsEnumerable()?.ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex);
-                return null;
+                return tokenQuery.AsEnumerable()?.ToList();
             }
         }
 
-        public static IEnumerable<RefreshToken> FindForUser(User user)
+        public static IEnumerable<RefreshToken> FindForUser([NotNull] User user)
         {
             return FindForUser(user.Id);
         }
 
         public static RefreshToken FindOneForUser(Guid userId)
         {
-            try
+            lock (DbInterface.GetPlayerContextLock())
             {
-                using (var context = DbInterface.CreatePlayerContext())
-                {
-                    var token = context?.RefreshTokens.First(queryToken => queryToken.UserId == userId);
+                var token = DbInterface.GetPlayerContext()
+                    ?.RefreshTokens.First(queryToken => queryToken.UserId == userId);
 
-                    return token;
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex);
-                return null;
+                return token;
             }
         }
 
-        public static RefreshToken FindOneForUser(User user)
+        public static RefreshToken FindOneForUser([NotNull] User user)
         {
             return FindOneForUser(user.Id);
         }
@@ -209,40 +179,23 @@ namespace Intersect.Server.Database.PlayerData.Api
             return token != null && Remove(token, commit);
         }
 
-        public static bool Remove(RefreshToken token, bool commit = false)
+        public static bool Remove([NotNull] RefreshToken token, bool commit = false)
         {
-            try
+            lock (DbInterface.GetPlayerContextLock())
             {
-                using (var context = DbInterface.CreatePlayerContext(readOnly: false))
-                {
-                    context?.RefreshTokens.Remove(token);
-                    context?.SaveChanges();
-                }
+                DbInterface.GetPlayerContext()?.RefreshTokens.Remove(token);
+
                 return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex);
-                return false;
             }
         }
 
-        public static bool RemoveAll(IEnumerable<RefreshToken> tokens, bool commit = false)
+        public static bool RemoveAll([NotNull] IEnumerable<RefreshToken> tokens, bool commit = false)
         {
-            try
+            lock (DbInterface.GetPlayerContextLock())
             {
-                using (var context = DbInterface.CreatePlayerContext(readOnly: false))
-                {
-                    context?.RefreshTokens.RemoveRange(tokens);
-                    context?.SaveChanges();
-                }
+                DbInterface.GetPlayerContext()?.RefreshTokens.RemoveRange(tokens);
 
                 return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex);
-                return false;
             }
         }
 

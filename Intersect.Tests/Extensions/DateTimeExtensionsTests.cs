@@ -7,9 +7,11 @@ using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace Intersect.Extensions
 {
+
     [TestFixture]
     public class DateTimeExtensionsTests
     {
+
         private static IEnumerable<object[]> Data
         {
             get
@@ -92,7 +94,7 @@ namespace Intersect.Extensions
                     break;
 
                 default:
-                    throw new IndexOutOfRangeException();
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -108,5 +110,7 @@ namespace Intersect.Extensions
             Assert.AreEqual(0, unixEpoch.Second);
             Assert.AreEqual(0, unixEpoch.Millisecond);
         }
+
     }
+
 }

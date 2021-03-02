@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Server
+﻿namespace Intersect.Network.Packets.Server
 {
-    [MessagePackObject]
-    public class ShowPicturePacket : IntersectPacket
+
+    public class ShowPicturePacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public ShowPicturePacket()
-        {
-        }
 
         public ShowPicturePacket(string picture, int size, bool clickable)
         {
@@ -17,13 +11,10 @@ namespace Intersect.Network.Packets.Server
             Clickable = clickable;
         }
 
-        [Key(0)]
         public string Picture { get; set; }
 
-        [Key(1)]
         public int Size { get; set; }
 
-        [Key(2)]
         public bool Clickable { get; set; }
 
     }

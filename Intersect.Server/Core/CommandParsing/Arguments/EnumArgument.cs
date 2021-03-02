@@ -1,81 +1,88 @@
-﻿using Intersect.Localization;
+﻿using System.Collections.Immutable;
 
-using System;
-using System.Collections.Immutable;
+using Intersect.Localization;
+
+using JetBrains.Annotations;
 
 namespace Intersect.Server.Core.CommandParsing.Arguments
 {
+
     public class EnumArgument<TValue> : CommandArgument<TValue>
     {
+
         public EnumArgument(
-            LocaleArgument localization,
+            [NotNull] LocaleArgument localization,
             bool required = false,
             bool positional = false,
-            params TValue[] allowedValues
+            [CanBeNull] params TValue[] allowedValues
         ) : base(localization, required, positional)
         {
-            AllowedValues = (allowedValues ?? Array.Empty<TValue>()).ToImmutableArray();
+            AllowedValues = (allowedValues ?? new TValue[0]).ToImmutableArray();
         }
 
         public EnumArgument(
-            LocaleArgument localization,
+            [NotNull] LocaleArgument localization,
             bool required = false,
             bool positional = false,
             bool allowsMultiple = false,
-            params TValue[] allowedValues
+            [CanBeNull] params TValue[] allowedValues
         ) : base(localization, required, positional, allowsMultiple)
         {
-            AllowedValues = (allowedValues ?? Array.Empty<TValue>()).ToImmutableArray();
+            AllowedValues = (allowedValues ?? new TValue[0]).ToImmutableArray();
         }
 
         public EnumArgument(
-            LocaleArgument localization,
+            [NotNull] LocaleArgument localization,
             bool required = false,
             bool positional = false,
             bool allowsMultiple = false,
             TValue defaultValue = default(TValue),
-            params TValue[] allowedValues
+            [CanBeNull] params TValue[] allowedValues
         ) : base(localization, required, positional, allowsMultiple, defaultValue)
         {
-            AllowedValues = (allowedValues ?? Array.Empty<TValue>()).ToImmutableArray();
+            AllowedValues = (allowedValues ?? new TValue[0]).ToImmutableArray();
         }
 
         public EnumArgument(
-            LocaleArgument localization,
-            ArgumentRequiredPredicate requiredPredicate,
+            [NotNull] LocaleArgument localization,
+            [NotNull] ArgumentRequiredPredicate requiredPredicate,
             bool positional = false,
-            params TValue[] allowedValues
+            [CanBeNull] params TValue[] allowedValues
         ) : base(localization, requiredPredicate, positional)
         {
-            AllowedValues = (allowedValues ?? Array.Empty<TValue>()).ToImmutableArray();
+            AllowedValues = (allowedValues ?? new TValue[0]).ToImmutableArray();
         }
 
         public EnumArgument(
-            LocaleArgument localization,
-            ArgumentRequiredPredicate requiredPredicate,
+            [NotNull] LocaleArgument localization,
+            [NotNull] ArgumentRequiredPredicate requiredPredicate,
             bool positional = false,
             bool allowsMultiple = false,
-            params TValue[] allowedValues
+            [CanBeNull] params TValue[] allowedValues
         ) : base(localization, requiredPredicate, positional, allowsMultiple)
         {
-            AllowedValues = (allowedValues ?? Array.Empty<TValue>()).ToImmutableArray();
+            AllowedValues = (allowedValues ?? new TValue[0]).ToImmutableArray();
         }
 
         public EnumArgument(
-            LocaleArgument localization,
-            ArgumentRequiredPredicate requiredPredicate,
+            [NotNull] LocaleArgument localization,
+            [NotNull] ArgumentRequiredPredicate requiredPredicate,
             bool positional = false,
             bool allowsMultiple = false,
             TValue defaultValue = default(TValue),
-            params TValue[] allowedValues
+            [CanBeNull] params TValue[] allowedValues
         ) : base(localization, requiredPredicate, positional, allowsMultiple, defaultValue)
         {
-            AllowedValues = (allowedValues ?? Array.Empty<TValue>()).ToImmutableArray();
+            AllowedValues = (allowedValues ?? new TValue[0]).ToImmutableArray();
         }
 
         public ImmutableArray<TValue> AllowedValues { get; }
 
-        public override bool IsValueAllowed(object value) =>
-            value is TValue castedValue && AllowedValues.Contains(castedValue);
+        public override bool IsValueAllowed(object value)
+        {
+            return value is TValue castedValue && AllowedValues.Contains(castedValue);
+        }
+
     }
+
 }

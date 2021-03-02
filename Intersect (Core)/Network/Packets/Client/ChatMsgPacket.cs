@@ -1,14 +1,8 @@
-﻿using MessagePack;
-
-namespace Intersect.Network.Packets.Client
+﻿namespace Intersect.Network.Packets.Client
 {
-    [MessagePackObject]
-    public class ChatMsgPacket : IntersectPacket
+
+    public class ChatMsgPacket : CerasPacket
     {
-        //Parameterless Constructor for MessagePack
-        public ChatMsgPacket()
-        {
-        }
 
         public ChatMsgPacket(string msg, byte channel)
         {
@@ -16,10 +10,8 @@ namespace Intersect.Network.Packets.Client
             Channel = channel;
         }
 
-        [Key(0)]
         public string Message { get; set; }
 
-        [Key(1)]
         public byte Channel { get; set; }
 
     }
