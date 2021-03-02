@@ -11,7 +11,7 @@ using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.Framework.Gwen.ControlInternal;
 using Intersect.Client.Framework.Gwen.DragDrop;
 using Intersect.Client.Framework.Gwen.Input;
-#if DEBUG || DIAGNOSTIC
+#if DEBUG
 using Intersect.Logging;
 #endif
 
@@ -1097,7 +1097,7 @@ namespace Intersect.Client.Framework.Gwen.Control
         /// </summary>
         public virtual event GwenEventHandler<ClickedEventArgs> DoubleRightClicked;
 
-#if DIAGNOSTIC
+#if DEBUG
         ~Base()
         {
             Log.Debug($"IDisposable object finalized: {GetType()}");
@@ -1967,28 +1967,6 @@ namespace Intersect.Client.Framework.Gwen.Control
         internal bool InputMouseWheeled(int delta)
         {
             return OnMouseWheeled(delta);
-        }
-
-        /// <summary>
-        ///     Handler invoked on mouse wheel event.
-        /// </summary>
-        /// <param name="delta">Scroll delta.</param>
-        protected virtual bool OnMouseHWheeled(int delta)
-        {
-            if (mActualParent != null)
-            {
-                return mActualParent.OnMouseHWheeled(delta);
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        ///     Invokes mouse wheeled event (used by input system).
-        /// </summary>
-        internal bool InputMouseHWheeled(int delta)
-        {
-            return OnMouseHWheeled(delta);
         }
 
         /// <summary>

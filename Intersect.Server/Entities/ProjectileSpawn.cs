@@ -22,7 +22,7 @@ namespace Intersect.Server.Entities
 
         public ProjectileBase ProjectileBase;
 
-        public long TransmittionTimer = Globals.Timing.Milliseconds;
+        public long TransmittionTimer = Globals.Timing.TimeMs;
 
         public byte X;
 
@@ -47,7 +47,7 @@ namespace Intersect.Server.Entities
             Dir = dir;
             ProjectileBase = projectileBase;
             Parent = parent;
-            TransmittionTimer = Globals.Timing.Milliseconds +
+            TransmittionTimer = Globals.Timing.TimeMs +
                                 (long) ((float) ProjectileBase.Speed / (float) ProjectileBase.Range);
         }
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
 
-using Intersect.Enums;
 using Intersect.Editor.Localization;
 using Intersect.GameObjects;
 using Intersect.GameObjects.Events;
@@ -30,8 +29,6 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
             cmbItem.Items.AddRange(ItemBase.Names);
             cmbAction.SelectedIndex = mMyCommand.Add ? 0 : 1;
             cmbItem.SelectedIndex = ItemBase.ListIndex(mMyCommand.ItemId);
-            cmbMethod.SelectedIndex = (int)mMyCommand.ItemHandling;
-
             if (mMyCommand.Quantity < 1)
             {
                 nudGiveTakeAmount.Value = 1;
@@ -54,13 +51,6 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
                 cmbAction.Items.Add(Strings.EventChangeItems.actions[i]);
             }
 
-            lblMethod.Text = Strings.EventChangeItems.Method;
-            cmbMethod.Items.Clear();
-            for (var i = 0; i < Strings.EventChangeItems.Methods.Count; i++)
-            {
-                cmbMethod.Items.Add(Strings.EventChangeItems.Methods[i]);
-            }
-
             btnSave.Text = Strings.EventChangeItems.okay;
             btnCancel.Text = Strings.EventChangeItems.cancel;
         }
@@ -70,7 +60,6 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
             mMyCommand.Add = !Convert.ToBoolean(cmbAction.SelectedIndex);
             mMyCommand.ItemId = ItemBase.IdFromList(cmbItem.SelectedIndex);
             mMyCommand.Quantity = (int) nudGiveTakeAmount.Value;
-            mMyCommand.ItemHandling = (ItemHandling) cmbMethod.SelectedIndex;
             mEventEditor.FinishCommandEdit();
         }
 
@@ -79,11 +68,6 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
             mEventEditor.CancelCommandEdit();
         }
 
-        private void nudGiveTakeAmount_ValueChanged(object sender, EventArgs e)
-        {
-            // This should never be below 1. We shouldn't accept giving or taking away 0 items!
-            nudGiveTakeAmount.Value = Math.Max(1, nudGiveTakeAmount.Value);
-        }
     }
 
 }

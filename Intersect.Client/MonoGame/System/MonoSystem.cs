@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 using Intersect.Client.Framework.Sys;
 
@@ -8,13 +7,14 @@ namespace Intersect.Client.MonoGame.System
 
     public class MonoSystem : GameSystem
     {
-        public readonly long StartTime;
+
+        public Stopwatch StopWatch = new Stopwatch();
 
         public long TotalMilliseconds;
 
         public MonoSystem()
         {
-             StartTime = DateTime.UtcNow.Ticks;
+            StopWatch.Start();
         }
 
         public override long GetTimeMs()
@@ -24,12 +24,12 @@ namespace Intersect.Client.MonoGame.System
 
         public override long GetTimeMsExact()
         {
-            return (DateTime.UtcNow.Ticks - StartTime) / TimeSpan.TicksPerMillisecond;
+            return StopWatch.ElapsedMilliseconds;
         }
 
         public override void Update()
         {
-            TotalMilliseconds = (DateTime.UtcNow.Ticks - StartTime) / TimeSpan.TicksPerMillisecond;
+            TotalMilliseconds = StopWatch.ElapsedMilliseconds;
         }
 
         public override void Log(string msg)

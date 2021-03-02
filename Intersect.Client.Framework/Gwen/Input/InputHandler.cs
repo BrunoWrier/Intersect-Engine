@@ -2,7 +2,6 @@
 using System.Text;
 
 using Intersect.Client.Framework.Gwen.Control;
-using Intersect.Client.Framework.Gwen.ControlInternal;
 using Intersect.Client.Framework.Gwen.DragDrop;
 
 namespace Intersect.Client.Framework.Gwen.Input
@@ -396,45 +395,13 @@ namespace Intersect.Client.Framework.Gwen.Input
         }
 
         /// <summary>
-        ///     Mouse click handler.
+        ///     Key handler.
         /// </summary>
         /// <param name="canvas">Canvas.</param>
-        /// <param name="mouseButton">Mouse button number.</param>
-        /// <param name="down">Specifies if the button is down.</param>
+        /// <param name="key">Key.</param>
+        /// <param name="down">True if the key is down.</param>
         /// <returns>True if handled.</returns>
-        public static bool OnMouseScroll(Base canvas, int deltaX, int deltaY)
-        {
-
-            if (canvas == null || 
-                HoveredControl == null ||
-                HoveredControl.GetCanvas() != canvas ||
-                !canvas.IsVisible
-            )
-            {
-                return false;
-            }
-
-            if (deltaY != 0)
-            {
-                HoveredControl.InputMouseWheeled(deltaY);
-            }
-                
-            if (deltaX != 0)
-            {
-                HoveredControl.InputMouseHWheeled(deltaX);
-            }
-
-            return true;
-        }
-
-            /// <summary>
-            ///     Key handler.
-            /// </summary>
-            /// <param name="canvas">Canvas.</param>
-            /// <param name="key">Key.</param>
-            /// <param name="down">True if the key is down.</param>
-            /// <returns>True if handled.</returns>
-            public static bool OnKeyEvent(Base canvas, Key key, bool down)
+        public static bool OnKeyEvent(Base canvas, Key key, bool down)
         {
             if (null == KeyboardFocus)
             {

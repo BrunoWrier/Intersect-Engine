@@ -3,8 +3,6 @@ using System.Security.Cryptography;
 
 using Ceras;
 
-using Intersect.Utilities;
-
 using JetBrains.Annotations;
 
 #if INTERSECT_DIAGNOSTIC
@@ -13,16 +11,17 @@ using Intersect.Logging;
 
 namespace Intersect.Network
 {
+
     public abstract class ConnectionPacket : CerasPacket
     {
+
         protected const int SIZE_HANDSHAKE_SECRET = 32;
 
         protected RSACryptoServiceProvider mRsa;
-        protected byte[] mHandshakeSecret;
 
-        protected long mAdjusted;
-        protected long mUTC;
-        protected long mOffset;
+        private byte[] mEncryptedData;
+
+        protected byte[] mHandshakeSecret;
 
         protected ConnectionPacket()
         {
@@ -33,10 +32,6 @@ namespace Intersect.Network
             mRsa = rsa ?? throw new ArgumentNullException();
 
             mHandshakeSecret = handshakeSecret;
-
-            Adjusted = Timing.Global.Ticks;
-            Offset = Timing.Global.TicksOffset;
-            UTC = Timing.Global.TicksUTC;
         }
 
         [Exclude]
@@ -46,29 +41,13 @@ namespace Intersect.Network
             set => mHandshakeSecret = value;
         }
 
-        [Exclude]
-        public long Adjusted
-        {
-            get => mAdjusted;
-            set => mAdjusted = value;
-        }
-
-        [Exclude]
-        public long UTC
-        {
-            get => mUTC;
-            set => mUTC = value;
-        }
-
-        [Exclude]
-        public long Offset
-        {
-            get => mOffset;
-            set => mOffset = value;
-        }
-
         [Include, NotNull]
-        protected byte[] EncryptedData { get; set; }
+        protected byte[] EncryptedData
+        {
+            get => mEncryptedData;
+
+            set => mEncryptedData = value;
+        }
 
         public abstract bool Encrypt();
 
@@ -89,5 +68,7 @@ namespace Intersect.Network
             Log.Diagnostic($"Q: {BitConverter.ToString(parameters.Q)}");
 #endif
         }
+
     }
+
 }

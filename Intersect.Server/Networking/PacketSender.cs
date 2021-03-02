@@ -63,7 +63,6 @@ namespace Intersect.Server.Networking
                 SendEntityDataTo(client.Entity, client.Entity);
             }
 
-            client.TimedBufferPacketsRemaining = 5;
             client.SendPacket(new JoinGamePacket());
             PacketSender.SendGameData(client);
 
@@ -212,7 +211,7 @@ namespace Intersect.Server.Networking
             {
                 if (client.SentMaps.TryGetValue(mapId, out var sentMap))
                 {
-                    if (sentMap.Item1 > Globals.Timing.Milliseconds && sentMap.Item2 == map.Revision)
+                    if (sentMap.Item1 > Globals.Timing.TimeMs && sentMap.Item2 == map.Revision)
                     {
                         return;
                     }
@@ -222,7 +221,7 @@ namespace Intersect.Server.Networking
 
                 try
                 {
-                    client.SentMaps.Add(mapId, new Tuple<long, int>(Globals.Timing.Milliseconds + 5000, map.Revision));
+                    client.SentMaps.Add(mapId, new Tuple<long, int>(Globals.Timing.TimeMs + 5000, map.Revision));
                 }
                 catch (Exception exception)
                 {
@@ -692,7 +691,7 @@ namespace Intersect.Server.Networking
 
             return new EntityVitalsPacket(
                 en.Id, en.GetEntityType(), en.MapId, en.GetVitals(), en.GetMaxVitals(), en.StatusPackets(),
-                en.CombatTimer - Globals.Timing.Milliseconds
+                en.CombatTimer - Globals.Timing.TimeMs
             );
         }
 
@@ -1159,7 +1158,7 @@ namespace Intersect.Server.Networking
             if (player.SpellCooldowns.ContainsKey(spellId))
             {
                 var cds = new Dictionary<Guid, long>();
-                cds.Add(spellId, player.SpellCooldowns[spellId] - Globals.Timing.MillisecondsUTC);
+                cds.Add(spellId, player.SpellCooldowns[spellId] - Globals.Timing.RealTimeMs);
                 player.SendPacket(new SpellCooldownPacket(cds));
             }
         }
@@ -1171,7 +1170,7 @@ namespace Intersect.Server.Networking
                 var cds = new Dictionary<Guid, long>();
                 foreach (var cd in player.SpellCooldowns)
                 {
-                    cds.Add(cd.Key, cd.Value - Globals.Timing.MillisecondsUTC);
+                    cds.Add(cd.Key, cd.Value - Globals.Timing.RealTimeMs);
                 }
 
                 player.SendPacket(new SpellCooldownPacket(cds));
@@ -1184,7 +1183,7 @@ namespace Intersect.Server.Networking
             if (player.ItemCooldowns.ContainsKey(itemId))
             {
                 var cds = new Dictionary<Guid, long>();
-                cds.Add(itemId, player.ItemCooldowns[itemId] - Globals.Timing.MillisecondsUTC);
+                cds.Add(itemId, player.ItemCooldowns[itemId] - Globals.Timing.RealTimeMs);
                 player.SendPacket(new ItemCooldownPacket(cds));
             }
         }
@@ -1196,7 +1195,7 @@ namespace Intersect.Server.Networking
                 var cds = new Dictionary<Guid, long>();
                 foreach (var cd in player.ItemCooldowns)
                 {
-                    cds.Add(cd.Key, cd.Value - Globals.Timing.MillisecondsUTC);
+                    cds.Add(cd.Key, cd.Value - Globals.Timing.RealTimeMs);
                 }
 
                 player.SendPacket(new ItemCooldownPacket(cds));

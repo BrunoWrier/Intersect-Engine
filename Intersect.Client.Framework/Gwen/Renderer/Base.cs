@@ -1,6 +1,6 @@
 ﻿using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
-#if DEBUG || DIAGNOSTIC
+#if DEBUG
 using Intersect.Logging;
 #endif
 
@@ -96,7 +96,7 @@ namespace Intersect.Client.Framework.Gwen.Renderer
             GC.SuppressFinalize(this);
         }
 
-#if DIAGNOSTIC
+#if DEBUG
         ~Base()
         {
             Log.Debug($"IDisposable object finalized: {GetType()}");

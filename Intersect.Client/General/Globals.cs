@@ -72,13 +72,9 @@ namespace Intersect.Client.General
         //Crafting station
         public static bool InCraft = false;
 
-        public static bool InShop => GameShop != null;
+        [NotNull] public static GameInput InputManager;
 
         public static bool InTrade = false;
-
-        public static bool CanCloseInventory => !(InBag || InBank || InCraft || InShop || InTrade);
-
-        [NotNull] public static GameInput InputManager;
 
         public static bool IntroComing = true;
 
@@ -106,6 +102,10 @@ namespace Intersect.Client.General
         public static Player Me;
 
         public static bool MoveRouteActive = false;
+
+        public static int MyX = 0;
+
+        public static int MyY = 0;
 
         public static bool NeedsMaps = true;
 
